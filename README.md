@@ -20,7 +20,7 @@
 - 🔐 **Zero-Knowledge Encryption** — All credentials are encrypted via AES-256-CBC. The master key is securely locked inside your OS's native secure storage (Windows DPAPI or macOS Keychain via `safeStorage`), meaning only your specific user profile can decrypt it.
 - 🗂️ **Smart Organization** — Group, tag, and arrange your hosts using intuitive drag-and-drop.
 - 📑 **Tabbed Sessions** — Run multiple SSH sessions concurrently. Instantly duplicate or reconnect tabs.
-- ⚡ **Native OpenSSH Integration** — No bundled protocol stacks. terX uses your system's `ssh.exe`, meaning it natively respects your `~/.ssh/config` and `~/.ssh/known_hosts`.
+- ⚡ **Native OpenSSH Integration** — No bundled protocol stacks. terX uses your system's `ssh`, meaning it natively respects your `~/.ssh/config` and `~/.ssh/known_hosts`.
 - 📤 **Secure Portable Exports** — Need to move hosts to another PC? Export them with an optional **Transfer Password**. This encrypts the file using AES-256-CBC with a PBKDF2-derived key, making it safe to transfer anywhere.
 
 ## 📸 Screenshots
