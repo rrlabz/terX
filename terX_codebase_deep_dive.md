@@ -57,7 +57,7 @@ terX/
 └────────────┬─────────────────────────────────────────────────┘
              │  window.electron (contextIsolation: true)
 ┌────────────▼─────────────────────────────────────────────────┐
-│  RENDERER PROCESS  (React 18 / Vite)                         │
+│  RENDERER PROCESS  (React 33 / Vite)                         │
 │  src/App.tsx → ConnectionManager + TerminalTabs → Terminal   │
 │  settings.html / import-export.html (separate pages)         │
 └──────────────────────────────────────────────────────────────┘
