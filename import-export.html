@@ -1,0 +1,752 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#0f1115" />
+    <meta name="description" content="terX Host Import Export" />
+    <link rel="icon" href="app_icon.ico" />
+    <title>terX Import Export</title>
+    <style>
+      :root {
+        color-scheme: dark;
+        --scrollbar-size: 5px;
+        --scrollbar-thumb: #4a4a4a;
+        --scrollbar-thumb-hover: #616161;
+        --scrollbar-track: transparent;
+      }
+
+      * {
+        box-sizing: border-box;
+        scrollbar-width: thin;
+        scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track);
+      }
+
+      ::-webkit-scrollbar {
+        width: var(--scrollbar-size);
+        height: var(--scrollbar-size);
+      }
+
+      ::-webkit-scrollbar-track {
+        background-color: var(--scrollbar-track);
+      }
+
+      ::-webkit-scrollbar-thumb {
+        background-color: var(--scrollbar-thumb);
+        border-radius: 999px;
+      }
+
+      ::-webkit-scrollbar-thumb:hover {
+        background-color: var(--scrollbar-thumb-hover);
+      }
+
+      ::-webkit-scrollbar-corner {
+        background: var(--scrollbar-track);
+      }
+
+      body {
+        margin: 0;
+        font-family: Consolas, "Lucida Console", monospace;
+        background: #0f1115;
+        color: #d4dde8;
+        height: 100vh;
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+      }
+
+      .window-titlebar {
+        height: 32px;
+        flex-shrink: 0;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding-left: 8px;
+        border-bottom: 1px solid #202020;
+        background: linear-gradient(180deg, #111111 0%, #0d0d0d 100%);
+        -webkit-app-region: drag;
+        user-select: none;
+      }
+
+      .window-titlebar-left {
+        min-width: 0;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+      }
+
+      .window-titlebar-icon {
+        width: 14px;
+        height: 14px;
+        object-fit: contain;
+        pointer-events: none;
+        -webkit-user-drag: none;
+      }
+
+      .window-titlebar-brand-wrap {
+        min-width: 0;
+        display: flex;
+        align-items: baseline;
+        gap: 6px;
+        line-height: 1;
+      }
+
+      .window-titlebar-brand {
+        font-size: 10px;
+        letter-spacing: 0.05em;
+        color: #d3e2fb;
+        white-space: nowrap;
+      }
+
+      .window-titlebar-subtitle {
+        margin-top: 0;
+        font-size: 8px;
+        letter-spacing: 0.02em;
+        color: #7788a3;
+        white-space: nowrap;
+      }
+
+      .window-titlebar-controls {
+        display: flex;
+        align-items: stretch;
+        align-self: stretch;
+        -webkit-app-region: no-drag;
+      }
+
+      .window-titlebar .titlebar-btn {
+        width: 42px;
+        height: 100%;
+        border: none;
+        border-radius: 0;
+        background: transparent;
+        color: #c8c8c8;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 12px;
+        font-weight: 500;
+        line-height: 1;
+        padding: 0;
+        border-left: 1px solid rgba(255, 255, 255, 0.04);
+        transition: background-color 0.14s ease, color 0.14s ease;
+      }
+
+      .window-titlebar .titlebar-btn:hover {
+        background-color: rgba(255, 255, 255, 0.1);
+        color: #f3f5f9;
+      }
+
+      .window-titlebar .titlebar-btn:active {
+        background-color: rgba(255, 255, 255, 0.16);
+      }
+
+      .window-titlebar .titlebar-btn-icon {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 14px;
+        text-align: center;
+      }
+
+      .window-titlebar .titlebar-btn-close:hover {
+        background-color: #c84a58;
+        color: #ffffff;
+      }
+
+      .window-titlebar .titlebar-btn-close:active {
+        background-color: #b9414e;
+      }
+
+      .shell {
+        flex: 1;
+        min-height: 0;
+        padding: 18px;
+        display: grid;
+        gap: 12px;
+        overflow: auto;
+      }
+
+      .card {
+        border: 1px solid #2a303b;
+        border-radius: 10px;
+        padding: 16px;
+        background: #151922;
+      }
+
+      h1 {
+        margin: 0 0 6px;
+        font-size: 16px;
+        font-weight: 600;
+      }
+
+      h2 {
+        margin: 0 0 10px;
+        font-size: 13px;
+        font-weight: 600;
+      }
+
+      p {
+        margin: 0;
+        color: #9fb0c5;
+        font-size: 12px;
+        line-height: 1.5;
+      }
+
+      .field-grid {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+      }
+
+      .checkbox-line {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 11px;
+      }
+
+      .tree-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 8px;
+      }
+
+      .tree-box {
+        max-height: 340px;
+        overflow: auto;
+        border: 1px solid #2b3442;
+        border-radius: 7px;
+        padding: 8px;
+        background: #10151c;
+      }
+
+      .tree-group {
+        margin-bottom: 8px;
+      }
+
+      .tree-group:last-child {
+        margin-bottom: 0;
+      }
+
+      .tree-group-title {
+        font-size: 11px;
+        color: #c5d4e7;
+        margin-bottom: 6px;
+      }
+
+      .tree-hosts {
+        display: grid;
+        gap: 4px;
+        padding-left: 18px;
+      }
+
+      .tree-empty {
+        color: #8d9eb4;
+        font-size: 11px;
+      }
+
+      .button-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-top: 12px;
+      }
+
+      button {
+        height: 30px;
+        border: 1px solid #335a8a;
+        border-radius: 6px;
+        background: #1f3f68;
+        color: #e8f1ff;
+        font-family: inherit;
+        font-size: 11px;
+        padding: 0 12px;
+      }
+
+      button:hover {
+        background: #28528a;
+      }
+
+      button.secondary {
+        border-color: #334050;
+        background: #1a212c;
+        color: #c8d4e3;
+      }
+
+      button.secondary:hover {
+        background: #232d3a;
+      }
+
+      .status {
+        min-height: 16px;
+        margin-top: 8px;
+        font-size: 11px;
+        color: #9fb0c5;
+      }
+
+      .status.error {
+        color: #f6a8b0;
+      }
+
+      .status.success {
+        color: #9edab5;
+      }
+
+      .modal-overlay {
+        display: none;
+        position: fixed;
+        inset: 0;
+        background: rgba(0,0,0,0.7);
+        z-index: 1000;
+        align-items: center;
+        justify-content: center;
+      }
+      .modal {
+        background: #151922;
+        border: 1px solid #2a303b;
+        border-radius: 8px;
+        padding: 20px;
+        width: 320px;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+      }
+      .modal-title {
+        margin: 0 0 10px;
+        font-size: 14px;
+        font-weight: 600;
+      }
+      .modal-desc {
+        font-size: 11px;
+        color: #9fb0c5;
+        margin-bottom: 16px;
+      }
+      .modal-input {
+        width: 100%;
+        padding: 8px;
+        font-size: 12px;
+        background: #0c0f14;
+        border: 1px solid #364052;
+        color: #fff;
+        border-radius: 4px;
+        margin-bottom: 16px;
+        box-sizing: border-box;
+      }
+      .modal-actions {
+        display: flex;
+        justify-content: flex-end;
+        gap: 8px;
+      }
+    </style>
+  </head>
+  <body>
+    <header
+      id="windowTitlebar"
+      class="window-titlebar"
+      oncontextmenu="event.preventDefault();"
+    >
+      <div class="window-titlebar-left">
+        <img class="window-titlebar-icon" src="app_icon.ico" alt="" aria-hidden="true" />
+        <div class="window-titlebar-brand-wrap">
+          <div class="window-titlebar-brand">terX</div>
+          <div class="window-titlebar-subtitle">Import / Export Hosts</div>
+        </div>
+      </div>
+      <div class="window-titlebar-controls">
+        <button id="windowMinimizeBtn" class="titlebar-btn" aria-label="Minimize window" title="Minimize" type="button">
+          <span class="titlebar-btn-icon" aria-hidden="true">−</span>
+        </button>
+        <button id="windowMaximizeBtn" class="titlebar-btn" aria-label="Maximize window" title="Maximize" type="button">
+          <span class="titlebar-btn-icon" id="windowMaximizeIcon" aria-hidden="true">□</span>
+        </button>
+        <button id="windowCloseBtn" class="titlebar-btn titlebar-btn-close" aria-label="Close window" title="Close" type="button">
+          <span class="titlebar-btn-icon" aria-hidden="true">×</span>
+        </button>
+      </div>
+    </header>
+
+    <main class="shell">
+      <section class="card">
+        <h1>Import / Export Hosts</h1>
+        <p>Select hosts and fields, then export or import host files.</p>
+      </section>
+
+      <section class="card">
+        <h2>Export Fields</h2>
+        <div class="field-grid">
+          <label class="checkbox-line"><input id="fieldDescription" type="checkbox" checked /> Description</label>
+          <label class="checkbox-line"><input id="fieldPassword" type="checkbox" /> Password</label>
+          <label class="checkbox-line"><input id="fieldPrivateKeyPath" type="checkbox" /> Key</label>
+          <label class="checkbox-line"><input id="fieldUsername" type="checkbox" checked /> Username</label>
+        </div>
+      </section>
+
+      <section class="card">
+        <div class="tree-header">
+          <strong style="font-size: 11px; color: #c3d2e5;">Connection Tree (Select What To Export)</strong>
+          <div style="display: flex; gap: 6px;">
+            <button id="selectAllHostsBtn" class="secondary" type="button">Select All</button>
+            <button id="clearAllHostsBtn" class="secondary" type="button">Clear</button>
+          </div>
+        </div>
+        <div id="hostsTree" class="tree-box">
+          <div class="tree-empty">Loading hosts...</div>
+        </div>
+
+        <div class="button-row">
+          <button id="exportHostsBtn" type="button">Export Selected Hosts</button>
+          <button id="importHostsBtn" class="secondary" type="button">Import Hosts</button>
+        </div>
+        <div id="hostTransferStatus" class="status"></div>
+      </section>
+    </main>
+
+    <script>
+      const state = {
+        connections: [],
+        selectedHostIds: new Set(),
+      };
+
+      const controls = {
+        windowTitlebar: document.getElementById('windowTitlebar'),
+        windowMinimizeBtn: document.getElementById('windowMinimizeBtn'),
+        windowMaximizeBtn: document.getElementById('windowMaximizeBtn'),
+        windowMaximizeIcon: document.getElementById('windowMaximizeIcon'),
+        windowCloseBtn: document.getElementById('windowCloseBtn'),
+        fieldDescription: document.getElementById('fieldDescription'),
+        fieldPassword: document.getElementById('fieldPassword'),
+        fieldPrivateKeyPath: document.getElementById('fieldPrivateKeyPath'),
+        fieldUsername: document.getElementById('fieldUsername'),
+
+        hostsTree: document.getElementById('hostsTree'),
+        selectAllHostsBtn: document.getElementById('selectAllHostsBtn'),
+        clearAllHostsBtn: document.getElementById('clearAllHostsBtn'),
+        exportHostsBtn: document.getElementById('exportHostsBtn'),
+        importHostsBtn: document.getElementById('importHostsBtn'),
+        hostTransferStatus: document.getElementById('hostTransferStatus'),
+      };
+
+      function setStatus(target, message, type) {
+        target.textContent = message || '';
+        target.className = `status ${type || ''}`.trim();
+      }
+
+      function setMaximizeButtonState(isMaximized) {
+        controls.windowMaximizeIcon.textContent = isMaximized ? '❐' : '□';
+        controls.windowMaximizeBtn.setAttribute('title', isMaximized ? 'Restore' : 'Maximize');
+        controls.windowMaximizeBtn.setAttribute('aria-label', isMaximized ? 'Restore window' : 'Maximize window');
+      }
+
+      async function syncWindowState() {
+        const result = await window.electron?.ipcRenderer.invoke('window:self-is-maximized');
+        if (result?.success) {
+          setMaximizeButtonState(Boolean(result.maximized));
+        }
+      }
+
+      async function minimizeWindow() {
+        await window.electron?.ipcRenderer.invoke('window:self-minimize');
+      }
+
+      async function toggleMaximizeWindow() {
+        const result = await window.electron?.ipcRenderer.invoke('window:self-toggle-maximize');
+        if (result?.success) {
+          setMaximizeButtonState(Boolean(result.maximized));
+        }
+      }
+
+      async function closeWindow() {
+        await window.electron?.ipcRenderer.invoke('window:self-close');
+      }
+
+      async function showWindowMenu(x, y) {
+        await window.electron?.ipcRenderer.invoke('window:self-show-system-menu', { x, y });
+      }
+
+      function groupConnections(connections) {
+        const grouped = new Map();
+        connections.forEach((connection) => {
+          const group = connection.group || 'Ungrouped';
+          if (!grouped.has(group)) {
+            grouped.set(group, []);
+          }
+          grouped.get(group).push(connection);
+        });
+        return Array.from(grouped.entries()).sort((a, b) => a[0].localeCompare(b[0]));
+      }
+
+      function clearElementChildren(element) {
+        while (element.firstChild) {
+          element.removeChild(element.firstChild);
+        }
+      }
+
+      function renderHostTree() {
+        clearElementChildren(controls.hostsTree);
+
+        if (!state.connections.length) {
+          const empty = document.createElement('div');
+          empty.className = 'tree-empty';
+          empty.textContent = 'No saved hosts found.';
+          controls.hostsTree.appendChild(empty);
+          return;
+        }
+
+        const groups = groupConnections(state.connections);
+        groups.forEach(([group, hosts]) => {
+          const groupWrap = document.createElement('div');
+          groupWrap.className = 'tree-group';
+
+          const title = document.createElement('div');
+          title.className = 'tree-group-title';
+          title.textContent = `${group} (${hosts.length})`;
+
+          const hostsWrap = document.createElement('div');
+          hostsWrap.className = 'tree-hosts';
+
+          hosts.forEach((host) => {
+            const label = document.createElement('label');
+            label.className = 'checkbox-line';
+
+            const checkbox = document.createElement('input');
+            checkbox.type = 'checkbox';
+            checkbox.checked = state.selectedHostIds.has(host.id);
+            checkbox.dataset.hostCheckbox = host.id;
+            checkbox.addEventListener('change', (event) => {
+              const target = event.target;
+              if (!(target instanceof HTMLInputElement)) {
+                return;
+              }
+
+              if (target.checked) {
+                state.selectedHostIds.add(host.id);
+              } else {
+                state.selectedHostIds.delete(host.id);
+              }
+            });
+
+            label.appendChild(checkbox);
+            label.appendChild(
+              document.createTextNode(` ${host.name} (${host.username || 'no-user'}@${host.host}:${host.port})`)
+            );
+            hostsWrap.appendChild(label);
+          });
+
+          groupWrap.appendChild(title);
+          groupWrap.appendChild(hostsWrap);
+          controls.hostsTree.appendChild(groupWrap);
+        });
+      }
+
+      async function loadConnections() {
+        const result = await window.electron?.ipcRenderer.invoke('connections:load');
+        state.connections = Array.isArray(result) ? result : [];
+        state.selectedHostIds = new Set(state.connections.map((connection) => connection.id));
+        renderHostTree();
+      }
+
+      function showExportModal() {
+        return new Promise((resolve) => {
+          const overlay = document.getElementById('exportModal');
+          const input = document.getElementById('exportPasswordInput');
+          const cancelBtn = document.getElementById('exportCancelBtn');
+          const skipBtn = document.getElementById('exportSkipBtn');
+          const confirmBtn = document.getElementById('exportConfirmBtn');
+
+          input.value = '';
+          overlay.style.display = 'flex';
+          input.focus();
+
+          const cleanup = () => {
+            overlay.style.display = 'none';
+            cancelBtn.removeEventListener('click', onCancel);
+            skipBtn.removeEventListener('click', onSkip);
+            confirmBtn.removeEventListener('click', onConfirm);
+          };
+
+          const onCancel = () => { cleanup(); resolve(null); };
+          const onSkip = () => { cleanup(); resolve(''); };
+          const onConfirm = () => { cleanup(); resolve(input.value); };
+
+          cancelBtn.addEventListener('click', onCancel);
+          skipBtn.addEventListener('click', onSkip);
+          confirmBtn.addEventListener('click', onConfirm);
+        });
+      }
+
+      function showImportModal() {
+        return new Promise((resolve) => {
+          const overlay = document.getElementById('importModal');
+          const input = document.getElementById('importPasswordInput');
+          const cancelBtn = document.getElementById('importCancelBtn');
+          const confirmBtn = document.getElementById('importConfirmBtn');
+
+          input.value = '';
+          overlay.style.display = 'flex';
+          input.focus();
+
+          const cleanup = () => {
+            overlay.style.display = 'none';
+            cancelBtn.removeEventListener('click', onCancel);
+            confirmBtn.removeEventListener('click', onConfirm);
+          };
+
+          const onCancel = () => { cleanup(); resolve(null); };
+          const onConfirm = () => { cleanup(); resolve(input.value); };
+
+          cancelBtn.addEventListener('click', onCancel);
+          confirmBtn.addEventListener('click', onConfirm);
+        });
+      }
+
+      async function exportHosts() {
+        if (state.selectedHostIds.size === 0) {
+          setStatus(controls.hostTransferStatus, 'No hosts selected to export.', 'error');
+          return;
+        }
+
+        const password = await showExportModal();
+        if (password === null) return; // Canceled
+
+        const payload = {
+          connectionIds: Array.from(state.selectedHostIds),
+          fields: {
+            description: controls.fieldDescription.checked,
+            password: controls.fieldPassword.checked,
+            privateKeyPath: controls.fieldPrivateKeyPath.checked,
+            username: controls.fieldUsername.checked,
+          },
+          password: password || undefined,
+        };
+
+        const result = await window.electron?.ipcRenderer.invoke('settings:export-connections', payload);
+        if (!result?.success) {
+          setStatus(controls.hostTransferStatus, result?.error || 'Export failed.', 'error');
+          return;
+        }
+
+        if (result.canceled) {
+          setStatus(controls.hostTransferStatus, 'Export canceled.', '');
+          return;
+        }
+
+        setStatus(
+          controls.hostTransferStatus,
+          `Exported ${result.count} host(s) to ${result.filePath}`,
+          'success'
+        );
+      }
+
+      async function importHosts() {
+        let result = await window.electron?.ipcRenderer.invoke('settings:import-connections');
+        
+        if (result?.needsPassword) {
+          const password = await showImportModal();
+          if (password === null) {
+            setStatus(controls.hostTransferStatus, 'Import canceled.', '');
+            return;
+          }
+          result = await window.electron?.ipcRenderer.invoke('settings:import-connections', { filePath: result.filePath, password });
+        }
+
+        if (!result?.success) {
+          setStatus(controls.hostTransferStatus, result?.error || 'Import failed.', 'error');
+          return;
+        }
+
+        if (result.canceled) {
+          setStatus(controls.hostTransferStatus, 'Import canceled.', '');
+          return;
+        }
+
+        setStatus(
+          controls.hostTransferStatus,
+          `Imported ${result.importedCount} host(s). Total saved: ${result.totalCount}.`,
+          'success'
+        );
+        await loadConnections();
+      }
+
+      controls.selectAllHostsBtn.addEventListener('click', () => {
+        state.selectedHostIds = new Set(state.connections.map((connection) => connection.id));
+        renderHostTree();
+      });
+
+      controls.clearAllHostsBtn.addEventListener('click', () => {
+        state.selectedHostIds = new Set();
+        renderHostTree();
+      });
+
+      controls.exportHostsBtn.addEventListener('click', () => {
+        void exportHosts();
+      });
+
+      controls.importHostsBtn.addEventListener('click', () => {
+        void importHosts();
+      });
+
+      controls.windowMinimizeBtn.addEventListener('click', () => {
+        void minimizeWindow();
+      });
+
+      controls.windowMaximizeBtn.addEventListener('click', () => {
+        void toggleMaximizeWindow();
+      });
+
+      controls.windowCloseBtn.addEventListener('click', () => {
+        void closeWindow();
+      });
+
+      controls.windowTitlebar.addEventListener('dblclick', () => {
+        void toggleMaximizeWindow();
+      });
+
+      controls.windowTitlebar.addEventListener('contextmenu', (event) => {
+        event.preventDefault();
+        void showWindowMenu(event.clientX, event.clientY);
+      });
+
+      window.electron?.ipcRenderer.on('connections:updated', () => {
+        void loadConnections();
+      });
+
+      window.electron?.ipcRenderer.on('window:maximized-state', (_event, payload) => {
+        setMaximizeButtonState(Boolean(payload?.maximized));
+      });
+
+      window.addEventListener('keydown', (event) => {
+        if (event.altKey && event.code === 'Space') {
+          event.preventDefault();
+          void showWindowMenu();
+        }
+      });
+
+      void loadConnections();
+      void syncWindowState();
+    </script>
+
+    <div id="exportModal" class="modal-overlay">
+      <div class="modal">
+        <div class="modal-title">Export Security</div>
+        <div class="modal-desc">Enter a password to encrypt this file for use on other computers. Skip to use machine-bound encryption.</div>
+        <input type="password" id="exportPasswordInput" class="modal-input" placeholder="Password (Optional)" />
+        <div class="modal-actions">
+          <button type="button" class="secondary" id="exportCancelBtn">Cancel</button>
+          <button type="button" class="secondary" id="exportSkipBtn">Skip Password</button>
+          <button type="button" id="exportConfirmBtn">Export</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="importModal" class="modal-overlay">
+      <div class="modal">
+        <div class="modal-title">Password Required</div>
+        <div class="modal-desc">This file is encrypted. Please enter the Transfer Password to import.</div>
+        <input type="password" id="importPasswordInput" class="modal-input" placeholder="Password" />
+        <div class="modal-actions">
+          <button type="button" class="secondary" id="importCancelBtn">Cancel</button>
+          <button type="button" id="importConfirmBtn">Import</button>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

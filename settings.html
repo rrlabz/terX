@@ -1,0 +1,727 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="theme-color" content="#0f1115" />
+  <meta name="description" content="terX Settings" />
+  <link rel="icon" href="app_icon.ico" />
+  <title>terX Settings</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --scrollbar-size: 5px;
+      --scrollbar-thumb: #4a4a4a;
+      --scrollbar-thumb-hover: #616161;
+      --scrollbar-track: transparent;
+    }
+
+    * {
+      box-sizing: border-box;
+      scrollbar-width: thin;
+      scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track);
+    }
+
+    ::-webkit-scrollbar {
+      width: var(--scrollbar-size);
+      height: var(--scrollbar-size);
+    }
+
+    ::-webkit-scrollbar-track {
+      background-color: var(--scrollbar-track);
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background-color: var(--scrollbar-thumb);
+      border-radius: 999px;
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+      background-color: var(--scrollbar-thumb-hover);
+    }
+
+    ::-webkit-scrollbar-corner {
+      background: var(--scrollbar-track);
+    }
+
+    body {
+      margin: 0;
+      font-family: Consolas, "Lucida Console", monospace;
+      background: #0f1115;
+      color: #d4dde8;
+      height: 100vh;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .window-titlebar {
+      height: 32px;
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding-left: 8px;
+      border-bottom: 1px solid #202020;
+      background: linear-gradient(180deg, #111111 0%, #0d0d0d 100%);
+      -webkit-app-region: drag;
+      user-select: none;
+    }
+
+    .window-titlebar-left {
+      min-width: 0;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .window-titlebar-icon {
+      width: 14px;
+      height: 14px;
+      object-fit: contain;
+      pointer-events: none;
+      -webkit-user-drag: none;
+    }
+
+    .window-titlebar-brand-wrap {
+      min-width: 0;
+      display: flex;
+      align-items: baseline;
+      gap: 6px;
+      line-height: 1;
+    }
+
+    .window-titlebar-brand {
+      font-size: 10px;
+      letter-spacing: 0.05em;
+      color: #d3e2fb;
+      white-space: nowrap;
+    }
+
+    .window-titlebar-subtitle {
+      margin-top: 0;
+      font-size: 8px;
+      letter-spacing: 0.02em;
+      color: #7788a3;
+      white-space: nowrap;
+    }
+
+    .window-titlebar-controls {
+      display: flex;
+      align-items: stretch;
+      align-self: stretch;
+      -webkit-app-region: no-drag;
+    }
+
+    .window-titlebar .titlebar-btn {
+      width: 42px;
+      height: 100%;
+      border: none;
+      border-radius: 0;
+      background: transparent;
+      color: #c8c8c8;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      font-weight: 500;
+      line-height: 1;
+      padding: 0;
+      border-left: 1px solid rgba(255, 255, 255, 0.04);
+      transition: background-color 0.14s ease, color 0.14s ease;
+    }
+
+    .window-titlebar .titlebar-btn:hover {
+      background-color: rgba(255, 255, 255, 0.1);
+      color: #f3f5f9;
+    }
+
+    .window-titlebar .titlebar-btn:active {
+      background-color: rgba(255, 255, 255, 0.16);
+    }
+
+    .window-titlebar .titlebar-btn-icon {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 14px;
+      text-align: center;
+    }
+
+    .window-titlebar .titlebar-btn-close:hover {
+      background-color: #c84a58;
+      color: #ffffff;
+    }
+
+    .window-titlebar .titlebar-btn-close:active {
+      background-color: #b9414e;
+    }
+
+    .window-titlebar-controls .titlebar-spacer {
+      width: 42px;
+      height: 100%;
+      border-left: 1px solid rgba(255, 255, 255, 0.04);
+    }
+
+    .settings-shell {
+      flex: 1;
+      min-height: 0;
+      padding: 18px;
+      display: grid;
+      gap: 12px;
+      overflow: auto;
+    }
+
+    .settings-card {
+      border: 1px solid #2a303b;
+      border-radius: 10px;
+      padding: 16px;
+      background: #151922;
+    }
+
+    h1 {
+      margin: 0 0 8px;
+      font-size: 16px;
+      font-weight: 600;
+    }
+
+    p {
+      margin: 0;
+      color: #9fb0c5;
+      font-size: 12px;
+      line-height: 1.5;
+    }
+
+    h2 {
+      margin: 0 0 10px;
+      font-size: 13px;
+      font-weight: 600;
+    }
+
+    .form-row {
+      display: grid;
+      gap: 8px;
+      margin-top: 10px;
+    }
+
+    label {
+      font-size: 11px;
+      color: #b9c8da;
+    }
+
+    input[type='text'],
+    input[type='number'],
+    input[type='password'] {
+      width: 100%;
+      height: 30px;
+      border: 1px solid #2b3442;
+      border-radius: 6px;
+      background: #11161d;
+      color: #d5dfec;
+      padding: 0 9px;
+      font-family: inherit;
+      font-size: 12px;
+    }
+
+    .input-with-button {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 8px;
+    }
+
+    .button-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 12px;
+    }
+
+    .field-hint {
+      margin-top: 2px;
+      color: #8ea2bb;
+      font-size: 10px;
+      line-height: 1.35;
+    }
+
+    button {
+      height: 30px;
+      border: 1px solid #335a8a;
+      border-radius: 6px;
+      background: #1f3f68;
+      color: #e8f1ff;
+      font-family: inherit;
+      font-size: 11px;
+      padding: 0 12px;
+    }
+
+    button:hover {
+      background: #28528a;
+    }
+
+    button.secondary {
+      border-color: #334050;
+      background: #1a212c;
+      color: #c8d4e3;
+    }
+
+    button.secondary:hover {
+      background: #232d3a;
+    }
+
+    .status {
+      min-height: 16px;
+      margin-top: 8px;
+      font-size: 11px;
+      color: #9fb0c5;
+    }
+
+    .status.error {
+      color: #f6a8b0;
+    }
+
+    .status.success {
+      color: #9edab5;
+    }
+
+    .export-layout {
+      display: grid;
+      gap: 10px;
+    }
+
+    .about-grid {
+      display: grid;
+      gap: 6px;
+    }
+
+    .about-row {
+      display: grid;
+      grid-template-columns: 120px 1fr;
+      gap: 10px;
+      font-size: 11px;
+    }
+
+    .about-key {
+      color: #97a8be;
+    }
+
+    .about-value {
+      color: #d4dde8;
+      word-break: break-word;
+    }
+
+    .about-divider {
+      border: none;
+      border-top: 1px solid #2a303b;
+      margin: 14px 0;
+    }
+
+    .security-section-title {
+      font-size: 12px;
+      font-weight: 600;
+      color: #7ec8a8;
+      margin: 0 0 10px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .security-icon {
+      font-size: 13px;
+      line-height: 1;
+    }
+
+    .security-grid {
+      display: grid;
+      gap: 12px;
+    }
+
+    .security-item {
+      border-left: 2px solid #2a3a4a;
+      padding-left: 10px;
+    }
+
+    .security-item-title {
+      font-size: 11px;
+      font-weight: 600;
+      color: #c8d8e8;
+      margin: 0 0 3px;
+    }
+
+    .security-item-detail {
+      font-size: 10px;
+      color: #8ea2bb;
+      line-height: 1.5;
+      margin: 0;
+    }
+
+    .security-badge {
+      display: inline-block;
+      font-size: 9px;
+      font-weight: 600;
+      letter-spacing: 0.04em;
+      padding: 2px 6px;
+      border-radius: 3px;
+      margin-left: 6px;
+      vertical-align: middle;
+    }
+
+    .security-badge-green {
+      background: rgba(126, 200, 168, 0.15);
+      color: #7ec8a8;
+      border: 1px solid rgba(126, 200, 168, 0.25);
+    }
+
+    .security-badge-blue {
+      background: rgba(100, 160, 220, 0.12);
+      color: #82b8e0;
+      border: 1px solid rgba(100, 160, 220, 0.2);
+    }
+  </style>
+</head>
+
+<body>
+  <header id="windowTitlebar" class="window-titlebar" oncontextmenu="event.preventDefault();">
+    <div class="window-titlebar-left">
+      <img class="window-titlebar-icon" src="app_icon.ico" alt="" aria-hidden="true" />
+      <div class="window-titlebar-brand-wrap">
+        <div class="window-titlebar-brand">terX</div>
+        <div class="window-titlebar-subtitle">Settings</div>
+      </div>
+    </div>
+    <div class="window-titlebar-controls">
+      <button id="windowMinimizeBtn" class="titlebar-btn" aria-label="Minimize window" title="Minimize" type="button">
+        <span class="titlebar-btn-icon" aria-hidden="true">−</span>
+      </button>
+      <span class="titlebar-spacer" aria-hidden="true"></span>
+      <button id="windowCloseBtn" class="titlebar-btn titlebar-btn-close" aria-label="Close window" title="Close"
+        type="button">
+        <span class="titlebar-btn-icon" aria-hidden="true">×</span>
+      </button>
+    </div>
+  </header>
+
+  <main class="settings-shell">
+    <section class="settings-card">
+      <h1>Settings</h1>
+      <p>Global SSH behavior and host export/import controls.</p>
+    </section>
+
+    <section class="settings-card">
+      <h2>Terminal</h2>
+      <div class="form-row">
+        <label for="scrollbackInput">Scrollback Lines</label>
+        <input id="scrollbackInput" type="number" min="500" max="200000" step="500" />
+      </div>
+      <div class="form-row">
+        <label for="fontSizeInput">Text Size</label>
+        <input id="fontSizeInput" type="number" min="8" max="32" step="1" />
+        <p class="field-hint">Applies to all terminal tabs. Range: 8 to 32.</p>
+      </div>
+    </section>
+
+    <section class="settings-card">
+      <h2>Global SSH Key</h2>
+      <p>If a host has no password and no key path, this key is used for authentication.</p>
+      <div class="form-row">
+        <label for="globalUsernameInput">Global Username (optional)</label>
+        <input id="globalUsernameInput" type="text" placeholder="Used when a host username is not set"
+          autocomplete="off" />
+        <p class="field-hint">If host username is blank, this username is used for login.</p>
+      </div>
+      <div class="form-row">
+        <label for="globalKeyPathInput">Private Key Path</label>
+        <div class="input-with-button">
+          <input id="globalKeyPathInput" type="text" placeholder="C:\\Users\\you\\.ssh\\id_rsa" />
+          <button id="browseGlobalKeyBtn" class="secondary" type="button">Browse</button>
+        </div>
+      </div>
+      <div class="form-row">
+        <label for="globalKeyPassphraseInput">Key Passphrase (optional)</label>
+        <div class="input-with-button">
+          <input id="globalKeyPassphraseInput" type="password" placeholder="Enter passphrase for encrypted private key"
+            autocomplete="off" />
+          <button id="clearGlobalPassphraseBtn" class="secondary" type="button">Clear</button>
+        </div>
+        <p id="globalKeyPassphraseHint" class="field-hint">No passphrase stored.</p>
+      </div>
+      <div class="button-row">
+        <button id="saveSettingsBtn" type="button">Save Settings</button>
+      </div>
+      <div id="settingsStatus" class="status"></div>
+    </section>
+
+    <section class="settings-card export-layout">
+      <h2>Hosts Export / Import</h2>
+      <div class="button-row">
+        <button id="openImportExportBtn" type="button">Open Import / Export Window</button>
+      </div>
+      <div class="status">Manage host import/export selections in a dedicated window.</div>
+    </section>
+
+    <section class="settings-card">
+      <h2>About</h2>
+      <div class="about-grid">
+        <div class="about-row">
+          <div class="about-key">Application</div>
+          <div class="about-value">terX</div>
+        </div>
+        <div class="about-row">
+          <div class="about-key">Purpose</div>
+          <div class="about-value">terX is an open-source SSH management tool.</div>
+        </div>
+        <div class="about-row">
+          <div class="about-key">Version</div>
+          <div class="about-value">1.0.0</div>
+        </div>
+        <div class="about-row">
+          <div class="about-key">Terminal</div>
+          <div class="about-value">Native OpenSSH session handling</div>
+        </div>
+        <div class="about-row">
+          <div class="about-key">Developer</div>
+          <div class="about-value">Rahul R<br />https://github.com/rrlabz</div>
+        </div>
+      </div>
+
+      <hr class="about-divider" />
+
+      <div class="security-section-title">
+        <span class="security-icon">&#128274;</span>
+        Security Details
+      </div>
+
+      <div class="security-grid">
+        <div class="security-item">
+          <div class="security-item-title">
+            Credential Encryption
+            <span class="security-badge security-badge-green">AES-256-CBC</span>
+          </div>
+          <p class="security-item-detail">
+            All saved passwords are encrypted at rest using AES-256-CBC with a unique 256-bit key and per-entry random
+            initialization vectors (IV). Credentials are never stored in plain text.
+          </p>
+        </div>
+
+        <div class="security-item">
+          <div class="security-item-title">
+            Encryption Key Protection
+            <span class="security-badge security-badge-blue">OS-LEVEL</span>
+          </div>
+          <p class="security-item-detail">
+            The master encryption key is protected by the operating system's native credential store:<br />
+            &bull;&ensp;<strong>Windows:</strong> DPAPI (Data Protection API) — only the current Windows user account
+            can decrypt it.<br />
+            <!-- &bull;&ensp;<strong>macOS:</strong> Keychain — protected by your login credentials and Secure Enclave.<br />
+            &bull;&ensp;<strong>Linux:</strong> Secret Service API (GNOME Keyring / KWallet) when available. -->
+          </p>
+        </div>
+
+        <div class="security-item">
+          <div class="security-item-title">
+            Local-Only Storage
+            <span class="security-badge security-badge-green">OFFLINE</span>
+          </div>
+          <p class="security-item-detail">
+            All connection profiles, passwords, and settings are stored locally in the application data directory. No
+            credentials are transmitted to any remote server, cloud service, or third-party API.
+          </p>
+        </div>
+
+        <div class="security-item">
+          <div class="security-item-title">Network Security</div>
+          <p class="security-item-detail">
+            SSH connections are established using your system's native OpenSSH client, inheriting your system's SSH
+            configuration, host key verification, and known_hosts trust model. terX does not implement its own
+            SSH protocol stack.
+          </p>
+        </div>
+
+        <div class="security-item">
+          <div class="security-item-title">Export Security</div>
+          <p class="security-item-detail">
+            Exported JSON files are fully encrypted. By default, they use your local machine's AES-256-CBC key (safe for local backups).
+            You can optionally provide a Transfer Password during export to encrypt the file securely for cross-machine portability.
+          </p>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const settingsState = {
+      passphraseDirty: false,
+      hasStoredPassphrase: false,
+    };
+
+    const controls = {
+      windowTitlebar: document.getElementById('windowTitlebar'),
+      windowMinimizeBtn: document.getElementById('windowMinimizeBtn'),
+      windowCloseBtn: document.getElementById('windowCloseBtn'),
+      scrollbackInput: document.getElementById('scrollbackInput'),
+      fontSizeInput: document.getElementById('fontSizeInput'),
+      globalUsernameInput: document.getElementById('globalUsernameInput'),
+      globalKeyPathInput: document.getElementById('globalKeyPathInput'),
+      globalKeyPassphraseInput: document.getElementById('globalKeyPassphraseInput'),
+      clearGlobalPassphraseBtn: document.getElementById('clearGlobalPassphraseBtn'),
+      globalKeyPassphraseHint: document.getElementById('globalKeyPassphraseHint'),
+      saveSettingsBtn: document.getElementById('saveSettingsBtn'),
+      browseGlobalKeyBtn: document.getElementById('browseGlobalKeyBtn'),
+      settingsStatus: document.getElementById('settingsStatus'),
+      openImportExportBtn: document.getElementById('openImportExportBtn'),
+    };
+
+    function updatePassphraseHint(hasStoredPassphrase) {
+      settingsState.hasStoredPassphrase = Boolean(hasStoredPassphrase);
+      controls.clearGlobalPassphraseBtn.disabled = !settingsState.hasStoredPassphrase;
+      controls.globalKeyPassphraseHint.textContent = hasStoredPassphrase
+        ? 'Stored passphrase is configured. Enter a new value to replace it, or use Clear Stored Passphrase.'
+        : 'No passphrase stored.';
+    }
+
+    function setStatus(target, message, type) {
+      target.textContent = message || '';
+      target.className = `status ${type || ''}`.trim();
+    }
+
+    async function minimizeWindow() {
+      await window.electron?.ipcRenderer.invoke('window:self-minimize');
+    }
+
+    async function closeWindow() {
+      await window.electron?.ipcRenderer.invoke('window:self-close');
+    }
+
+    async function showWindowMenu(x, y) {
+      await window.electron?.ipcRenderer.invoke('window:self-show-system-menu', { x, y });
+    }
+
+    async function loadSettings() {
+      const result = await window.electron?.ipcRenderer.invoke('settings:load');
+      if (result?.success && result.settings) {
+        controls.scrollbackInput.value = String(result.settings.terminalScrollback || 10000);
+        controls.fontSizeInput.value = String(result.settings.terminalFontSize || 12);
+        controls.globalUsernameInput.value = result.settings.globalUsername || '';
+        controls.globalKeyPathInput.value = result.settings.globalSshKeyPath || '';
+        controls.globalKeyPassphraseInput.value = '';
+        settingsState.passphraseDirty = false;
+        updatePassphraseHint(Boolean(result.settings.hasGlobalSshKeyPassphrase));
+      }
+    }
+
+    async function saveSettings() {
+      const terminalScrollback = Number(controls.scrollbackInput.value || '10000');
+      const terminalFontSize = Number(controls.fontSizeInput.value || '12');
+      const globalUsername = controls.globalUsernameInput.value || '';
+      const globalSshKeyPath = controls.globalKeyPathInput.value || '';
+
+      const payload = {
+        terminalScrollback,
+        terminalFontSize,
+        globalUsername,
+        globalSshKeyPath,
+      };
+
+      if (settingsState.passphraseDirty) {
+        payload.globalSshKeyPassphrase = controls.globalKeyPassphraseInput.value || '';
+      }
+
+      const result = await window.electron?.ipcRenderer.invoke('settings:save', payload);
+
+      if (!result?.success) {
+        setStatus(controls.settingsStatus, result?.error || 'Failed to save settings.', 'error');
+        return;
+      }
+
+      controls.scrollbackInput.value = String(result.settings.terminalScrollback);
+      controls.fontSizeInput.value = String(result.settings.terminalFontSize || 12);
+      controls.globalUsernameInput.value = result.settings.globalUsername || '';
+      controls.globalKeyPathInput.value = result.settings.globalSshKeyPath || '';
+      controls.globalKeyPassphraseInput.value = '';
+      settingsState.passphraseDirty = false;
+      updatePassphraseHint(Boolean(result.settings.hasGlobalSshKeyPassphrase));
+      setStatus(controls.settingsStatus, 'Settings saved.', 'success');
+    }
+
+    async function browseGlobalKey() {
+      const result = await window.electron?.ipcRenderer.invoke('settings:pick-global-key');
+      if (!result?.success) {
+        setStatus(controls.settingsStatus, result?.error || 'Failed to pick key.', 'error');
+        return;
+      }
+
+      if (!result.canceled && result.filePath) {
+        controls.globalKeyPathInput.value = result.filePath;
+      }
+    }
+
+
+    async function openImportExportWindow() {
+      await window.electron?.ipcRenderer.invoke('window:open-import-export');
+    }
+
+    controls.saveSettingsBtn.addEventListener('click', () => {
+      void saveSettings();
+    });
+
+    controls.browseGlobalKeyBtn.addEventListener('click', () => {
+      void browseGlobalKey();
+    });
+
+    controls.globalKeyPassphraseInput.addEventListener('input', () => {
+      settingsState.passphraseDirty = true;
+    });
+
+    controls.clearGlobalPassphraseBtn.addEventListener('click', () => {
+      controls.globalKeyPassphraseInput.value = '';
+      settingsState.passphraseDirty = true;
+      setStatus(controls.settingsStatus, 'Stored passphrase will be cleared when you save settings.', '');
+    });
+
+    controls.openImportExportBtn.addEventListener('click', () => {
+      void openImportExportWindow();
+    });
+
+    controls.windowMinimizeBtn.addEventListener('click', () => {
+      void minimizeWindow();
+    });
+
+    controls.windowCloseBtn.addEventListener('click', () => {
+      void closeWindow();
+    });
+
+    controls.windowTitlebar.addEventListener('contextmenu', (event) => {
+      event.preventDefault();
+      void showWindowMenu(event.clientX, event.clientY);
+    });
+
+    window.electron?.ipcRenderer.on('settings:updated', (_event, settings) => {
+      if (typeof settings?.terminalScrollback === 'number') {
+        controls.scrollbackInput.value = String(settings.terminalScrollback);
+      }
+      if (typeof settings?.terminalFontSize === 'number') {
+        controls.fontSizeInput.value = String(settings.terminalFontSize);
+      }
+      if (typeof settings?.globalUsername === 'string') {
+        controls.globalUsernameInput.value = settings.globalUsername;
+      }
+      if (typeof settings?.globalSshKeyPath === 'string') {
+        controls.globalKeyPathInput.value = settings.globalSshKeyPath;
+      }
+      controls.globalKeyPassphraseInput.value = '';
+      settingsState.passphraseDirty = false;
+      updatePassphraseHint(Boolean(settings?.hasGlobalSshKeyPassphrase));
+    });
+
+    window.addEventListener('keydown', (event) => {
+      if (event.altKey && event.code === 'Space') {
+        event.preventDefault();
+        void showWindowMenu();
+      }
+    });
+
+    void loadSettings();
+  </script>
+</body>
+
+</html>
