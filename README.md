@@ -26,11 +26,11 @@
 ## 📸 Screenshots
 
 <div align="center">
-  <img src="public/screenshot-mac.png" width="48%" alt="macOS Glassmorphism UI">
+  <img src="public/screenshot-mac.png" width="100%" alt="macOS Glassmorphism UI">
 </div>
 
 <div align="center">
-  <img src="public/screenshot-windows.png" width="48%" alt="Windows Dark Mode UI">
+  <img src="public/screenshot-windows.png" width="100%" alt="Windows Dark Mode UI">
 </div>
 
 ## 🚀 Getting Started
