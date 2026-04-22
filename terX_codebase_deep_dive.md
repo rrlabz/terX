@@ -2,7 +2,7 @@
 
 ## 1. What terX Is
 
-**terX** is a Windows-first, open-source SSH manager built on **Electron 33 + React 18 + TypeScript**. It wraps your system's native `ssh.exe` (OpenSSH) with a modern dark-themed GUI, encrypted credential storage, and tabbed terminal sessions powered by `xterm.js` and `node-pty`.
+**terX** is a cross-platform (Windows & macOS) open-source SSH manager developed by **Rahul R** built on **Electron 33 + React 18 + TypeScript**. It wraps your system's native SSH executable (`ssh.exe` on Windows, `/usr/bin/ssh` on macOS) with a modern dark-themed GUI, encrypted credential storage, and tabbed terminal sessions powered by `xterm.js` and `node-pty`.
 
 ---
 
@@ -108,7 +108,7 @@ terX/
 1. **On first run**: Generate 32 random bytes via `crypto.randomBytes(32)`.
 2. **Storage**: If `safeStorage.isEncryptionAvailable()` (Windows DPAPI, macOS Keychain, Linux Secret Service) → store as `safeStorage.encryptString(key.toString('hex'))`.  Otherwise, store raw bytes (chmod 0600).
 3. **Legacy migration**: Detects old raw-32-byte file and auto-migrates to safeStorage format on next load.
-4. Key is stored at `%APPDATA%\terX\user-data\.terX-key`.
+4. **Key storage path**: Found in the OS-specific user data directory (`%APPDATA%\terX\user-data\.terX-key` on Windows, and the macOS system directory `~/Library/Application Support/terX/user-data/.terX-key`).
 
 ### Credential Encryption
 - **At-rest**: `AES-256-CBC` with a random 16-byte IV per operation.  Format: `"<iv_hex>:<ciphertext_hex>"`.
@@ -130,9 +130,9 @@ terX/
 
 ### Connection flow
 1. `ssh:connect` handler receives `ConnectionProfile + tabId`.
-2. Resolves `ssh.exe` path: hardcodes `C:\Windows\System32\OpenSSH\ssh.exe` first, falls back to PATH lookup.
+2. Resolves SSH path: checks `C:\Windows\System32\OpenSSH\ssh.exe` on Windows first, falling back to `where ssh` or `which ssh` (macOS) via PATH lookup.
 3. Builds SSH args: `ConnectTimeout=15`, `ServerAliveInterval=30`, `StrictHostKeyChecking=accept-new`, optional `-i <key>`, `-p <port>`, `user@host`.
-4. Spawns `node-pty` → `pty.spawn(ssh.exe, args, {name:'xterm-256color', cols:120, rows:30})`.
+4. Spawns `node-pty` → `pty.spawn(sshCommandPath, args, {name:'xterm-256color', cols:120, rows:30})`.
 5. Registers `onData` handler: streams output to renderer via `terminal:data`. Also auto-handles password prompts (regex match on `"password:"`) and key passphrase prompts (regex on `"Enter passphrase"`).
 6. Registers `onExit` → sends `terminal:closed` + removes from `activeConnections` Map.
 7. Stores `{ id, process, connected }` in `activeConnections: Map<string, ActiveConnection>`.
@@ -229,7 +229,9 @@ performGracefulAppShutdown()
 |---|---|
 | `npm start` | `concurrently` Vite dev server (port 3000) + Electron in dev mode |
 | `npm run build` | `vite build` → `build/` + `tsc` → `dist/main/` + `dist/preload/` |
-| `npm run build:dist` | Above + `electron-builder --win portable` |
+| `npm run build:setup` | Above + `electron-builder --win nsis` (Windows Installer) |
+| `npm run build:portable`| Above + `electron-builder --win portable` (Windows Portable) |
+| `npm run build:mac` | Above + package for macOS (`dmg`, `zip`) via `scripts/build-mac.js` |
 | `npm test` | `vitest run` (unit tests in `src/shared/__tests__/`) |
 
 **Key config decisions**:
@@ -276,7 +278,7 @@ User clicks window ×
 
 | Area | Decision / Gotcha |
 |---|---|
-| **Win32 ConPTY crash** | `process.kill(pid)` instead of `ptyProcess.kill()` to avoid native assertion in C++ teardown |
+| **Win32 ConPTY crash** | On Windows, uses `process.kill(pid)` instead of `ptyProcess.kill()` to avoid native assertion in C++ teardown. macOS uses standard `ptyProcess.kill()`. |
 | **Concurrent kill crash** | `pendingKillQueue` serializes kills with 50ms yields; `disconnectQueue` serializes tab closures |
 | **preload `off()` unreliable** | Function identity not preserved through contextBridge — use cleanup fn returned by `on()` |
 | **Terminal buffer preservation** | All tabs always mounted (`display:none`), not unmounted — preserves xterm scroll history |
