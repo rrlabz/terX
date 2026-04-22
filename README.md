@@ -25,8 +25,6 @@
 
 ## 📸 Screenshots
 
-*(Replace these placeholder images with your actual screenshots)*
-
 <div align="center">
   <img src="public/screenshot-mac.png" width="48%" alt="macOS Glassmorphism UI">
   <img src="public/screenshot-windows.png" width="48%" alt="Windows Dark Mode UI">
