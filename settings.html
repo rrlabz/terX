@@ -114,6 +114,36 @@
       -webkit-app-region: no-drag;
     }
 
+    /* macOS: brand moved to right side of titlebar */
+    .window-titlebar-brand-mac {
+      position: absolute;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 4px 12px;
+      -webkit-app-region: drag;
+    }
+    
+    .window-titlebar-brand-mac .window-titlebar-icon {
+      width: 16px;
+      height: 16px;
+      filter: drop-shadow(0 1px 2px rgba(0,0,0,0.4));
+      pointer-events: none;
+    }
+    
+    .window-titlebar-brand-mac .window-titlebar-brand {
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 0.04em;
+      color: #e5e7eb;
+    }
+    
+    .window-titlebar-brand-mac .window-titlebar-subtitle {
+      display: none;
+    }
+
     .window-titlebar .titlebar-btn {
       width: 42px;
       height: 100%;
@@ -130,6 +160,11 @@
       padding: 0;
       border-left: 1px solid rgba(255, 255, 255, 0.04);
       transition: background-color 0.14s ease, color 0.14s ease;
+      outline: none;
+    }
+    
+    .window-titlebar .titlebar-btn:focus {
+      outline: none;
     }
 
     .window-titlebar .titlebar-btn:hover {
@@ -390,12 +425,13 @@
       </div>
     </div>
     <div class="window-titlebar-controls">
-      <button id="windowMinimizeBtn" class="titlebar-btn" aria-label="Minimize window" title="Minimize" type="button">
+      <button id="windowMinimizeBtn" class="titlebar-btn" aria-label="Minimize window" title="Minimize" type="button" tabindex="-1">
         <span class="titlebar-btn-icon" aria-hidden="true">−</span>
       </button>
-      <span class="titlebar-spacer" aria-hidden="true"></span>
-      <button id="windowCloseBtn" class="titlebar-btn titlebar-btn-close" aria-label="Close window" title="Close"
-        type="button">
+      <button id="windowMaximizeBtn" class="titlebar-btn" aria-label="Maximize window" title="Maximize" type="button" tabindex="-1">
+        <span class="titlebar-btn-icon" id="windowMaximizeIcon" aria-hidden="true">□</span>
+      </button>
+      <button id="windowCloseBtn" class="titlebar-btn titlebar-btn-close" aria-label="Close window" title="Close" type="button" tabindex="-1">
         <span class="titlebar-btn-icon" aria-hidden="true">×</span>
       </button>
     </div>
@@ -432,7 +468,7 @@
       <div class="form-row">
         <label for="globalKeyPathInput">Private Key Path</label>
         <div class="input-with-button">
-          <input id="globalKeyPathInput" type="text" placeholder="C:\\Users\\you\\.ssh\\id_rsa" />
+          <input id="globalKeyPathInput" type="text" placeholder="~/.ssh/id_rsa or C:\Users\you\.ssh\id_rsa" />
           <button id="browseGlobalKeyBtn" class="secondary" type="button">Browse</button>
         </div>
       </div>
@@ -468,7 +504,7 @@
         </div>
         <div class="about-row">
           <div class="about-key">Purpose</div>
-          <div class="about-value">terX is an open-source SSH management tool.</div>
+          <div class="about-value">terX is an open-source SSH management tool for Windows and macOS.</div>
         </div>
         <div class="about-row">
           <div class="about-key">Version</div>
@@ -512,8 +548,8 @@
             The master encryption key is protected by the operating system's native credential store:<br />
             &bull;&ensp;<strong>Windows:</strong> DPAPI (Data Protection API) — only the current Windows user account
             can decrypt it.<br />
-            <!-- &bull;&ensp;<strong>macOS:</strong> Keychain — protected by your login credentials and Secure Enclave.<br />
-            &bull;&ensp;<strong>Linux:</strong> Secret Service API (GNOME Keyring / KWallet) when available. -->
+            &bull;&ensp;<strong>macOS:</strong> Keychain — protected by your login credentials and Secure Enclave.<br />
+            <!-- &bull;&ensp;<strong>Linux:</strong> Secret Service API (GNOME Keyring / KWallet) when available. -->
           </p>
         </div>
 
@@ -540,8 +576,8 @@
         <div class="security-item">
           <div class="security-item-title">Export Security</div>
           <p class="security-item-detail">
-            Exported JSON files are fully encrypted. By default, they use your local machine's AES-256-CBC key (safe for local backups).
-            You can optionally provide a Transfer Password during export to encrypt the file securely for cross-machine portability.
+            Exported JSON files are always encrypted. By default, they are encrypted with your machine-bound OS key (DPAPI or Keychain), making them safe for local backups but unreadable on other devices.
+            You can optionally provide a Transfer Password during export to securely encrypt the file with PBKDF2 for cross-machine portability.
           </p>
         </div>
       </div>
@@ -721,6 +757,21 @@
     });
 
     void loadSettings();
+
+    // Platform-adaptive titlebar: hide custom buttons on macOS (native traffic lights handle them)
+    const isMac = window.electron?.platform === 'darwin';
+    if (isMac) {
+      controls.windowTitlebar.style.paddingLeft = '76px';
+      controls.windowTitlebar.style.height = '40px';
+      controls.windowTitlebar.style.background = 'rgba(18, 18, 18, 0.7)';
+      controls.windowTitlebar.style.backdropFilter = 'blur(12px)';
+      controls.windowTitlebar.style.webkitBackdropFilter = 'blur(12px)';
+      controls.windowTitlebar.style.borderBottom = '1px solid rgba(255, 255, 255, 0.08)';
+      controls.windowTitlebar.style.boxShadow = 'inset 0 1px 0 rgba(255, 255, 255, 0.05)';
+      
+      const windowControls = controls.windowTitlebar.querySelector('.window-titlebar-controls');
+      if (windowControls) windowControls.style.display = 'none';
+    }
   </script>
 </body>
 

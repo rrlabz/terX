@@ -157,9 +157,9 @@ The `terminal:input` IPC handler includes a **15 ms burst deduplication guard**:
 
 | Scenario | Security Note |
 |----------|--------------| 
-| **Exporting hosts** | The user can optionally include passwords. If included, they appear in **plain text** in the JSON file. Users are warned in the UI. |
-| **Importing hosts** | Imported passwords are **immediately encrypted** with the local AES key upon import. The original import file can be deleted. |
-| **Recommendation** | Avoid including passwords in exports. If unavoidable, transmit the file securely and delete it after import. |
+| **Exporting hosts** | The user can optionally include passwords in their JSON export. If they provide a **Transfer Password**, the entire export is encrypted using AES-256-CBC with a PBKDF2-derived key (Portable). If they DO NOT provide a password, the entire export is encrypted using the machine-bound DPAPI key. **There are never plain text passwords in an export file.** |
+| **Importing hosts** | Imported passwords are **immediately encrypted** with the local DPAPI AES key upon import. The original import file can be deleted. |
+| **Recommendation** | Always use a Transfer Password when exporting credentials if you intend to move them to another machine. DPAPI-bound exports cannot be imported on another computer or by another user account. |
 
 ---
 
@@ -256,7 +256,7 @@ Application exits cleanly
 | Credential file stolen from disk | Passwords are AES-256 encrypted; key is DPAPI-protected | Low — attacker needs both the file AND the user's Windows session |
 | Encryption key file stolen | Key is DPAPI-encrypted; unusable without the original Windows login | Low — DPAPI binding to user credentials |
 | Memory inspection | Decrypted passwords exist in process memory only during active SSH sessions | Accepted — standard for all password-using applications |
-| Exported JSON file with passwords | User is warned in the UI; passwords are in plain text in exports | Medium — mitigated by user education; avoid including passwords in exports |
+| Exported JSON file with passwords | Passwords are encrypted using DPAPI (machine-bound) if no Transfer Password is used. | Low — an exported file cannot be decrypted on another machine without a Transfer Password |
 | Compromised SSH connection | Handled by OpenSSH, not terX; uses industry-standard SSH protocol | Low — same risk as any SSH usage |
 | SSH host key changed (MITM) | `StrictHostKeyChecking=accept-new` rejects changed keys; OpenSSH displays a warning | Low — same protection as manual SSH usage |
 | Bulk tab close crashing app | Serialized kill queue with 50ms delays prevents Windows ConPTY assertion crashes | Resolved — no residual risk |
@@ -281,7 +281,7 @@ A: No. The only network traffic is the SSH connections you explicitly initiate t
 A: terX uses the same `ssh.exe` that you would use manually in a terminal. The security of the connection itself is identical to running SSH from PowerShell or Command Prompt.
 
 **Q: What happens if I export my hosts?**
-A: You can choose which fields to include. If you include passwords, they will be in plain text in the JSON file. We recommend excluding passwords from exports or securely deleting the file after importing it elsewhere.
+A: You can choose which fields to include (e.g., passwords, keys). You will be prompted to enter a **Transfer Password**. This encrypts the entire export file with AES-256. If you choose to export without a password, the export is encrypted using your machine-bound key, meaning it can only be imported back into terX on your exact machine and user account.
 
 **Q: Does this require Visual Studio or build tools to install?**
 A: No. The application uses prebuilt native binaries for `node-pty`. No C++ compiler or Visual Studio installation is required on the end-user's machine.

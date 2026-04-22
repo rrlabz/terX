@@ -113,6 +113,36 @@
         -webkit-app-region: no-drag;
       }
 
+      /* macOS: brand moved to right side of titlebar */
+      .window-titlebar-brand-mac {
+        position: absolute;
+        left: 50%;
+        transform: translateX(-50%);
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 4px 12px;
+        -webkit-app-region: drag;
+      }
+      
+      .window-titlebar-brand-mac .window-titlebar-icon {
+        width: 16px;
+        height: 16px;
+        filter: drop-shadow(0 1px 2px rgba(0,0,0,0.4));
+        pointer-events: none;
+      }
+      
+      .window-titlebar-brand-mac .window-titlebar-brand {
+        font-size: 12px;
+        font-weight: 600;
+        letter-spacing: 0.04em;
+        color: #e5e7eb;
+      }
+      
+      .window-titlebar-brand-mac .window-titlebar-subtitle {
+        display: none;
+      }
+
       .window-titlebar .titlebar-btn {
         width: 42px;
         height: 100%;
@@ -129,6 +159,11 @@
         padding: 0;
         border-left: 1px solid rgba(255, 255, 255, 0.04);
         transition: background-color 0.14s ease, color 0.14s ease;
+        outline: none;
+      }
+      
+      .window-titlebar .titlebar-btn:focus {
+        outline: none;
       }
 
       .window-titlebar .titlebar-btn:hover {
@@ -352,13 +387,13 @@
         </div>
       </div>
       <div class="window-titlebar-controls">
-        <button id="windowMinimizeBtn" class="titlebar-btn" aria-label="Minimize window" title="Minimize" type="button">
+        <button id="windowMinimizeBtn" class="titlebar-btn" aria-label="Minimize window" title="Minimize" type="button" tabindex="-1">
           <span class="titlebar-btn-icon" aria-hidden="true">−</span>
         </button>
-        <button id="windowMaximizeBtn" class="titlebar-btn" aria-label="Maximize window" title="Maximize" type="button">
+        <button id="windowMaximizeBtn" class="titlebar-btn" aria-label="Maximize window" title="Maximize" type="button" tabindex="-1">
           <span class="titlebar-btn-icon" id="windowMaximizeIcon" aria-hidden="true">□</span>
         </button>
-        <button id="windowCloseBtn" class="titlebar-btn titlebar-btn-close" aria-label="Close window" title="Close" type="button">
+        <button id="windowCloseBtn" class="titlebar-btn titlebar-btn-close" aria-label="Close window" title="Close" type="button" tabindex="-1">
           <span class="titlebar-btn-icon" aria-hidden="true">×</span>
         </button>
       </div>
@@ -722,6 +757,21 @@
 
       void loadConnections();
       void syncWindowState();
+
+      // Platform-adaptive titlebar: hide custom buttons on macOS (native traffic lights handle them)
+      const isMac = window.electron?.platform === 'darwin';
+      if (isMac) {
+        controls.windowTitlebar.style.paddingLeft = '76px';
+        controls.windowTitlebar.style.height = '40px';
+        controls.windowTitlebar.style.background = 'rgba(18, 18, 18, 0.7)';
+        controls.windowTitlebar.style.backdropFilter = 'blur(12px)';
+        controls.windowTitlebar.style.webkitBackdropFilter = 'blur(12px)';
+        controls.windowTitlebar.style.borderBottom = '1px solid rgba(255, 255, 255, 0.08)';
+        controls.windowTitlebar.style.boxShadow = 'inset 0 1px 0 rgba(255, 255, 255, 0.05)';
+        
+        const windowControls = controls.windowTitlebar.querySelector('.window-titlebar-controls');
+        if (windowControls) windowControls.style.display = 'none';
+      }
     </script>
 
     <div id="exportModal" class="modal-overlay">

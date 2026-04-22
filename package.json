@@ -1,6 +1,6 @@
 {
   "name": "terx",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "terX SSH client",
   "main": "dist/main/index.js",
   "homepage": "./",
@@ -21,8 +21,11 @@
     "start:built": "cross-env NODE_ENV=production electron .",
     "build:portable": "npm run build && electron-builder --win portable",
     "build:setup": "npm run build && electron-builder --win nsis",
+    "build:mac": "npm run build && node scripts/build-mac.js",
+    "postinstall": "node scripts/postinstall.js",
     "test": "vitest run",
-    "clean": "taskkill /F /IM \"terX.exe\" 2>nul & taskkill /F /IM electron.exe 2>nul & rd /s /q dist"
+    "clean": "taskkill /F /IM \"terX.exe\" 2>nul & taskkill /F /IM electron.exe 2>nul & rd /s /q dist",
+    "clean:mac": "rm -rf dist"
   },
   "dependencies": {
     "@xterm/addon-fit": "^0.11.0",
@@ -89,6 +92,26 @@
       "installerIcon": "build/app_icon.ico",
       "uninstallerIcon": "build/app_icon.ico",
       "installerHeaderIcon": "build/app_icon.ico"
+    },
+    "mac": {
+      "target": [
+        { "target": "dmg" },
+        { "target": "zip" }
+      ],
+      "icon": "app_icon.icns",
+      "category": "public.app-category.developer-tools",
+      "darkModeSupport": true
+    },
+    "dmg": {
+      "title": "terX ${version}",
+      "window": {
+        "width": 540,
+        "height": 380
+      },
+      "contents": [
+        { "x": 130, "y": 190, "type": "file" },
+        { "x": 410, "y": 190, "type": "link", "path": "/Applications" }
+      ]
     }
   }
 }

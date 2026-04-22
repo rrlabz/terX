@@ -6,6 +6,7 @@ import { sanitizeTerminalPreview } from './shared/terminal-utils';
 import type { ConnectionProfile, ShutdownStatePayload } from './shared/types';
 
 interface ElectronAPI {
+  platform?: string;
   ipcRenderer: {
     invoke: (channel: string, ...args: any[]) => Promise<any>;
     send: (channel: string, ...args: any[]) => void;
@@ -202,16 +203,10 @@ const App: React.FC = () => {
       // the main cause of sluggishness on slower machines.  The preview data
       // is only consumed on-demand by the ghost tooltip via getter callbacks.
       const prevText = tabPreviewTextRef.current[payload.tabId] || '';
-      tabPreviewTextRef.current = {
-        ...tabPreviewTextRef.current,
-        [payload.tabId]: sanitizeTerminalPreview(prevText + payload.data).slice(-1600),
-      };
+      tabPreviewTextRef.current[payload.tabId] = sanitizeTerminalPreview(prevText + payload.data).slice(-1600);
 
       const prevRaw = tabPreviewRawRef.current[payload.tabId] || '';
-      tabPreviewRawRef.current = {
-        ...tabPreviewRawRef.current,
-        [payload.tabId]: (prevRaw + payload.data).slice(-8000),
-      };
+      tabPreviewRawRef.current[payload.tabId] = (prevRaw + payload.data).slice(-8000);
     };
 
     const cleanup = window.electron?.ipcRenderer.on('terminal:data', handleTerminalData);
@@ -465,6 +460,7 @@ const App: React.FC = () => {
   const sessionSummary = activeTabs.size === 1 ? '1 session active' : `${activeTabs.size} sessions active`;
   const activeConnectionIds = useMemo(() => new Set(Array.from(activeTabs.values()).map((connection) => connection.id)), [activeTabs]);
   const titlebarIconSrc = 'app_icon.ico';
+  const isMac = window.electron?.platform === 'darwin';
 
   return (
     <div className="app">
@@ -515,7 +511,7 @@ const App: React.FC = () => {
         </div>
       )}
       <header
-        className="app-titlebar"
+        className={`app-titlebar${isMac ? ' app-titlebar--mac' : ''}`}
         onDoubleClick={() => {
           void handleToggleMaximizeWindow();
         }}
@@ -528,61 +524,73 @@ const App: React.FC = () => {
           <img className="app-titlebar-icon" src={titlebarIconSrc} alt="" aria-hidden="true" />
           <div className="app-titlebar-brand-wrap">
             <div className="app-titlebar-brand">terX</div>
-            <div className="app-titlebar-subtitle">{sessionSummary}</div>
+            {!isMac && <div className="app-titlebar-subtitle">{sessionSummary}</div>}
           </div>
         </div>
         <div className="app-titlebar-controls">
+          {isMac && (
+            <div className="app-titlebar-session-mac">{sessionSummary}</div>
+          )}
           <button
-            className="titlebar-btn"
+            className={`titlebar-btn${isMac ? ' titlebar-btn--mac' : ''}`}
             onClick={() => {
               handleRequestDisconnectAll();
             }}
             aria-label="Close all tabs"
             title="Close all tabs"
             disabled={activeTabs.size === 0}
+            tabIndex={-1}
           >
-            <span className="titlebar-btn-icon" aria-hidden="true">⊗</span>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="titlebar-btn-icon"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
           </button>
           <button
-            className="titlebar-btn"
+            className={`titlebar-btn${isMac ? ' titlebar-btn--mac' : ''}`}
             onClick={() => {
               void handleOpenSettingsWindow();
             }}
             aria-label="Open settings"
             title="Settings"
+            tabIndex={-1}
           >
-            <span className="titlebar-btn-icon" aria-hidden="true">⚙</span>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="titlebar-btn-icon"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
           </button>
-          <button
-            className="titlebar-btn"
-            onClick={() => {
-              void handleMinimizeWindow();
-            }}
-            aria-label="Minimize window"
-            title="Minimize"
-          >
-            <span className="titlebar-btn-icon" aria-hidden="true">−</span>
-          </button>
-          <button
-            className="titlebar-btn"
-            onClick={() => {
-              void handleToggleMaximizeWindow();
-            }}
-            aria-label={isWindowMaximized ? 'Restore window' : 'Maximize window'}
-            title={isWindowMaximized ? 'Restore' : 'Maximize'}
-          >
-            <span className="titlebar-btn-icon" aria-hidden="true">{isWindowMaximized ? '❐' : '□'}</span>
-          </button>
-          <button
-            className="titlebar-btn titlebar-btn-close"
-            onClick={() => {
-              void handleCloseWindow();
-            }}
-            aria-label="Close window"
-            title="Close"
-          >
-            <span className="titlebar-btn-icon" aria-hidden="true">×</span>
-          </button>
+          {!isMac && (
+            <>
+              <button
+                className="titlebar-btn"
+                onClick={() => {
+                  void handleMinimizeWindow();
+                }}
+                aria-label="Minimize window"
+                title="Minimize"
+                tabIndex={-1}
+              >
+                <span className="titlebar-btn-icon" aria-hidden="true">−</span>
+              </button>
+              <button
+                className="titlebar-btn"
+                onClick={() => {
+                  void handleToggleMaximizeWindow();
+                }}
+                aria-label={isWindowMaximized ? 'Restore window' : 'Maximize window'}
+                title={isWindowMaximized ? 'Restore' : 'Maximize'}
+                tabIndex={-1}
+              >
+                <span className="titlebar-btn-icon" aria-hidden="true">{isWindowMaximized ? '❐' : '□'}</span>
+              </button>
+              <button
+                className="titlebar-btn titlebar-btn-close"
+                onClick={() => {
+                  void handleCloseWindow();
+                }}
+                aria-label="Close window"
+                title="Close"
+                tabIndex={-1}
+              >
+                <span className="titlebar-btn-icon" aria-hidden="true">×</span>
+              </button>
+            </>
+          )}
         </div>
       </header>
       {error && (

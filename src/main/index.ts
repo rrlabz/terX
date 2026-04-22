@@ -20,6 +20,7 @@ import { normalizeImportedConnection, projectConnectionForExport } from '../shar
 import type { ExportFieldSelection } from '../shared/types';
 
 const isProduction = process.env.NODE_ENV === 'production' || !isDev;
+const isMac = process.platform === 'darwin';
 let mainWindow: BrowserWindow | null;
 let settingsWindow: BrowserWindow | null;
 let importExportWindow: BrowserWindow | null;
@@ -59,12 +60,21 @@ async function performGracefulAppShutdown(): Promise<void> {
   }
 
   isShuttingDown = true;
+  const shouldQuit = process.platform !== 'darwin';
 
   const forcedExitTimer = setTimeout(() => {
     console.warn(`Graceful shutdown timed out after ${FORCE_SHUTDOWN_TIMEOUT_MS}ms. Forcing exit.`);
-    isAppQuitting = true;
     shutdownActiveConnections();
-    app.exit(0);
+    isShuttingDown = false;
+    if (shouldQuit) {
+      isAppQuitting = true;
+      app.exit(0);
+    } else {
+      if (mainWindow && !mainWindow.isDestroyed()) {
+        mainWindow.destroy();
+        mainWindow = null;
+      }
+    }
   }, FORCE_SHUTDOWN_TIMEOUT_MS);
 
   const startedAt = Date.now();
@@ -102,6 +112,7 @@ async function performGracefulAppShutdown(): Promise<void> {
     shutdownActiveConnections();
   } finally {
     clearTimeout(forcedExitTimer);
+    isShuttingDown = false;
 
     emitShutdownState({
       status: 'complete',
@@ -118,24 +129,31 @@ async function performGracefulAppShutdown(): Promise<void> {
       await new Promise((resolve) => setTimeout(resolve, 180 - elapsed));
     }
 
-    isAppQuitting = true;
+    if (shouldQuit) {
+      isAppQuitting = true;
 
-    if (settingsWindow && !settingsWindow.isDestroyed()) {
-      settingsWindow.destroy();
-      settingsWindow = null;
+      if (settingsWindow && !settingsWindow.isDestroyed()) {
+        settingsWindow.destroy();
+        settingsWindow = null;
+      }
+
+      if (importExportWindow && !importExportWindow.isDestroyed()) {
+        importExportWindow.destroy();
+        importExportWindow = null;
+      }
+
+      if (mainWindow && !mainWindow.isDestroyed()) {
+        mainWindow.destroy();
+        mainWindow = null;
+      }
+
+      app.quit();
+    } else {
+      if (mainWindow && !mainWindow.isDestroyed()) {
+        mainWindow.destroy();
+        mainWindow = null;
+      }
     }
-
-    if (importExportWindow && !importExportWindow.isDestroyed()) {
-      importExportWindow.destroy();
-      importExportWindow = null;
-    }
-
-    if (mainWindow && !mainWindow.isDestroyed()) {
-      mainWindow.close();
-      return;
-    }
-
-    app.quit();
   }
 }
 
@@ -187,13 +205,27 @@ function sanitizeSettingsForRenderer(settings: AppSettings): Omit<AppSettings, '
 }
 
 function resolveAppIconPath(): string | undefined {
-  const candidates = [
-    path.join(process.cwd(), 'app_icon.ico'),
-    path.join(app.getAppPath(), 'app_icon.ico'),
-    path.join(process.resourcesPath, 'app_icon.ico'),
+  // On macOS prefer the native .icns format; fall back to .ico for other platforms.
+  const preferredFile = process.platform === 'darwin' ? 'app_icon.icns' : 'app_icon.ico';
+  const fallbackFile = 'app_icon.ico';
+  const bases = [
+    process.cwd(),
+    app.getAppPath(),
+    process.resourcesPath,
   ];
 
-  return candidates.find((candidate) => fs.existsSync(candidate));
+  for (const base of bases) {
+    const preferred = path.join(base, preferredFile);
+    if (fs.existsSync(preferred)) return preferred;
+  }
+
+  // Fallback: check .ico in all locations
+  for (const base of bases) {
+    const fallback = path.join(base, fallbackFile);
+    if (fs.existsSync(fallback)) return fallback;
+  }
+
+  return undefined;
 }
 
 function showWindowSystemMenu(x?: number, y?: number): void {
@@ -279,7 +311,8 @@ function createWindow() {
     minWidth: 720,
     minHeight: 460,
     frame: false,
-    titleBarStyle: 'hidden',
+    titleBarStyle: isMac ? 'hiddenInset' : 'hidden',
+    trafficLightPosition: { x: 12, y: 12 },
     resizable: true,
     maximizable: true,
     minimizable: true,
@@ -299,8 +332,12 @@ function createWindow() {
 
   mainWindow.loadURL(startUrl);
 
-  if (process.platform === 'darwin' && appIconPath && app.dock) {
-    app.dock.setIcon(appIconPath);
+  if (process.platform === 'darwin' && appIconPath && app.dock && !appIconPath.endsWith('.icns')) {
+    try {
+      app.dock.setIcon(appIconPath);
+    } catch (err) {
+      // Ignore: Electron often fails to dynamically set dock icon with nativeImage.
+    }
   }
 
   if (!isProduction) {
@@ -343,7 +380,8 @@ function openSettingsWindow(): void {
     minWidth: 460,
     minHeight: 400,
     frame: false,
-    titleBarStyle: 'hidden',
+    titleBarStyle: isMac ? 'hiddenInset' : 'hidden',
+    trafficLightPosition: { x: 12, y: 12 },
     resizable: false,
     maximizable: false,
     minimizable: true,
@@ -404,7 +442,8 @@ function openImportExportWindow(): void {
     minWidth: 620,
     minHeight: 500,
     frame: false,
-    titleBarStyle: 'hidden',
+    titleBarStyle: isMac ? 'hiddenInset' : 'hidden',
+    trafficLightPosition: { x: 12, y: 10 },
     resizable: true,
     maximizable: true,
     minimizable: true,
@@ -454,8 +493,10 @@ app.on('ready', () => {
   if (mainWindow) {
     mainWindow.setMenuBarVisibility(false);
     mainWindow.removeMenu();
-    registerSSHHandlers(() => mainWindow);
   }
+  // Register SSH/terminal IPC handlers unconditionally — they use a getter
+  // callback so they do not need mainWindow to be non-null at registration time.
+  registerSSHHandlers(() => mainWindow);
 });
 
 app.on('window-all-closed', () => {
@@ -557,11 +598,6 @@ ipcMain.handle('window:is-maximized', async () => {
 });
 
 ipcMain.handle('window:close', async () => {
-  if (process.platform === 'darwin') {
-    mainWindow?.close();
-    return { success: true };
-  }
-
   void performGracefulAppShutdown();
   return { success: true, shuttingDown: true };
 });

@@ -55,6 +55,7 @@ function assertAllowedChannel(channel: string, allowedChannels: Set<string>): vo
 ipcRenderer.setMaxListeners(100);
 
 contextBridge.exposeInMainWorld('electron', {
+  platform: process.platform,
   ipcRenderer: {
     invoke: (channel: string, ...args: unknown[]) => {
       assertAllowedChannel(channel, validInvokeChannels);
