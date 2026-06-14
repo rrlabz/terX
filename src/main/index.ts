@@ -661,7 +661,7 @@ ipcMain.handle('window:open-import-export', async () => {
 
 ipcMain.handle('settings:load', async () => {
   const settings = loadAppSettings();
-  return { success: true, settings: sanitizeSettingsForRenderer(settings) };
+  return { success: true, settings: sanitizeSettingsForRenderer(settings), appVersion: app.getVersion() };
 });
 
 ipcMain.handle('settings:save', async (_event, next: Partial<AppSettings>) => {

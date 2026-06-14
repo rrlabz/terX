@@ -125,21 +125,21 @@
       padding: 4px 12px;
       -webkit-app-region: drag;
     }
-    
+
     .window-titlebar-brand-mac .window-titlebar-icon {
       width: 16px;
       height: 16px;
-      filter: drop-shadow(0 1px 2px rgba(0,0,0,0.4));
+      filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.4));
       pointer-events: none;
     }
-    
+
     .window-titlebar-brand-mac .window-titlebar-brand {
       font-size: 12px;
       font-weight: 600;
       letter-spacing: 0.04em;
       color: #e5e7eb;
     }
-    
+
     .window-titlebar-brand-mac .window-titlebar-subtitle {
       display: none;
     }
@@ -162,7 +162,7 @@
       transition: background-color 0.14s ease, color 0.14s ease;
       outline: none;
     }
-    
+
     .window-titlebar .titlebar-btn:focus {
       outline: none;
     }
@@ -425,13 +425,16 @@
       </div>
     </div>
     <div class="window-titlebar-controls">
-      <button id="windowMinimizeBtn" class="titlebar-btn" aria-label="Minimize window" title="Minimize" type="button" tabindex="-1">
+      <button id="windowMinimizeBtn" class="titlebar-btn" aria-label="Minimize window" title="Minimize" type="button"
+        tabindex="-1">
         <span class="titlebar-btn-icon" aria-hidden="true">−</span>
       </button>
-      <button id="windowMaximizeBtn" class="titlebar-btn" aria-label="Maximize window" title="Maximize" type="button" tabindex="-1">
+      <button id="windowMaximizeBtn" class="titlebar-btn" aria-label="Maximize window" title="Maximize" type="button"
+        tabindex="-1">
         <span class="titlebar-btn-icon" id="windowMaximizeIcon" aria-hidden="true">□</span>
       </button>
-      <button id="windowCloseBtn" class="titlebar-btn titlebar-btn-close" aria-label="Close window" title="Close" type="button" tabindex="-1">
+      <button id="windowCloseBtn" class="titlebar-btn titlebar-btn-close" aria-label="Close window" title="Close"
+        type="button" tabindex="-1">
         <span class="titlebar-btn-icon" aria-hidden="true">×</span>
       </button>
     </div>
@@ -508,7 +511,7 @@
         </div>
         <div class="about-row">
           <div class="about-key">Version</div>
-          <div class="about-value">1.0.0</div>
+          <div id="appVersionDisplay" class="about-value">Loading...</div>
         </div>
         <div class="about-row">
           <div class="about-key">Terminal</div>
@@ -576,8 +579,10 @@
         <div class="security-item">
           <div class="security-item-title">Export Security</div>
           <p class="security-item-detail">
-            Exported JSON files are always encrypted. By default, they are encrypted with your machine-bound OS key (DPAPI or Keychain), making them safe for local backups but unreadable on other devices.
-            You can optionally provide a Transfer Password during export to securely encrypt the file with PBKDF2 for cross-machine portability.
+            Exported JSON files are always encrypted. By default, they are encrypted with your machine-bound OS key
+            (DPAPI or Keychain), making them safe for local backups but unreadable on other devices.
+            You can optionally provide a Transfer Password during export to securely encrypt the file with PBKDF2 for
+            cross-machine portability.
           </p>
         </div>
       </div>
@@ -634,14 +639,20 @@
 
     async function loadSettings() {
       const result = await window.electron?.ipcRenderer.invoke('settings:load');
-      if (result?.success && result.settings) {
-        controls.scrollbackInput.value = String(result.settings.terminalScrollback || 10000);
+      if (result?.success) {
+        if (result.appVersion) {
+          const versionEl = document.getElementById('appVersionDisplay');
+          if (versionEl) versionEl.textContent = result.appVersion;
+        }
+        if (result.settings) {
+          controls.scrollbackInput.value = String(result.settings.terminalScrollback || 10000);
         controls.fontSizeInput.value = String(result.settings.terminalFontSize || 12);
         controls.globalUsernameInput.value = result.settings.globalUsername || '';
         controls.globalKeyPathInput.value = result.settings.globalSshKeyPath || '';
         controls.globalKeyPassphraseInput.value = '';
         settingsState.passphraseDirty = false;
         updatePassphraseHint(Boolean(result.settings.hasGlobalSshKeyPassphrase));
+        }
       }
     }
 
@@ -768,7 +779,7 @@
       controls.windowTitlebar.style.webkitBackdropFilter = 'blur(12px)';
       controls.windowTitlebar.style.borderBottom = '1px solid rgba(255, 255, 255, 0.08)';
       controls.windowTitlebar.style.boxShadow = 'inset 0 1px 0 rgba(255, 255, 255, 0.05)';
-      
+
       const windowControls = controls.windowTitlebar.querySelector('.window-titlebar-controls');
       if (windowControls) windowControls.style.display = 'none';
     }
