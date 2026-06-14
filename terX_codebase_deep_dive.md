@@ -286,3 +286,9 @@ User clicks window ×
 | **12s force-shutdown watchdog** | If graceful shutdown hangs (e.g. EDR blocking TerminateProcess), forces `app.exit(0)` |
 | **80ms renderer yield** | Before starting kill loop, yields 80ms so the shutdown overlay paints before synchronous Win32 calls block |
 | **DPAPI-bound export** | Non-password exports are encrypted with the DPAPI key and are **not portable** to other machines |
+
+package naming is
+example:- 
+<app>-<version>-<platform>
+terX-v1.1.0-win-x64.exe
+terX-v1.1.0-macos-arm64.dmg
