@@ -361,14 +361,14 @@ export function registerSSHHandlers(getMainWindow: () => BrowserWindow | null): 
       const resolvedKey = activeConnections.has(connectionKey)
         ? connectionKey
         : findConnectionKeyByTabId(connectionKey);
-      
+
       const conn = resolvedKey ? activeConnections.get(resolvedKey) : undefined;
       if (conn && resolvedKey) {
         activeConnections.delete(resolvedKey);
 
         try {
           conn.process.write('exit\r');
-        } catch {}
+        } catch { }
 
         const pending: PendingKill = { process: conn.process, exited: false };
         const exitSub = conn.process.onExit(() => {

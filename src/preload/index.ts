@@ -29,6 +29,8 @@ const validInvokeChannels = new Set([
   'settings:pick-global-key',
   'settings:export-connections',
   'settings:import-connections',
+  'app:check-update',
+  'app:download-update',
 ]);
 
 const validSendChannels = new Set([
@@ -43,6 +45,7 @@ const validEventChannels = new Set([
   'window:maximized-state',
   'settings:updated',
   'app:shutdown-state',
+  'update-progress',
 ]);
 
 function assertAllowedChannel(channel: string, allowedChannels: Set<string>): void {

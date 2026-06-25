@@ -29,7 +29,7 @@ const Terminal: React.FC<TerminalProps> = ({ tabId, connectionName, isActive, sc
     }
   }, []);
 
-  const fitAndResizeTerminal = useCallback(async () => {
+  const fitAndResizeTerminal = useCallback(() => {
     if (!isActiveRef.current || !fitAddonRef.current || !terminalRef.current) {
       return;
     }
@@ -41,15 +41,10 @@ const Terminal: React.FC<TerminalProps> = ({ tabId, connectionName, isActive, sc
 
     try {
       fitAddonRef.current.fit();
-      await window.electron?.ipcRenderer.invoke('terminal:resize', {
-        tabId,
-        cols: terminalRef.current.cols,
-        rows: terminalRef.current.rows,
-      });
     } catch (error) {
-      console.error('Failed to fit/resize terminal:', error);
+      console.error('Failed to fit terminal:', error);
     }
-  }, [tabId]);
+  }, []);
 
   const scheduleFitAndResize = useCallback(() => {
     if (resizeRafRef.current !== null) {
@@ -58,7 +53,7 @@ const Terminal: React.FC<TerminalProps> = ({ tabId, connectionName, isActive, sc
 
     resizeRafRef.current = requestAnimationFrame(() => {
       resizeRafRef.current = null;
-      void fitAndResizeTerminal();
+      fitAndResizeTerminal();
     });
   }, [fitAndResizeTerminal]);
 
@@ -105,12 +100,23 @@ const Terminal: React.FC<TerminalProps> = ({ tabId, connectionName, isActive, sc
     terminalRef.current = term;
     fitAddonRef.current = fitAddon;
 
+    // Send dimension updates to the backend automatically whenever xterm calculates a new grid size.
+    const resizeDisposable = term.onResize(({ cols, rows }) => {
+      window.electron?.ipcRenderer.invoke('terminal:resize', { tabId, cols, rows });
+    });
+
     // Delay initial fit so layout is ready.
     const initialFitTimer = window.setTimeout(() => {
       scheduleFitAndResize();
       if (isActiveRef.current) {
         term.focus();
       }
+      // Guarantee the backend is synced with our calculated starting dimensions
+      window.electron?.ipcRenderer.invoke('terminal:resize', {
+        tabId,
+        cols: term.cols,
+        rows: term.rows,
+      });
     }, 100);
 
     // Handle terminal input
@@ -179,6 +185,7 @@ const Terminal: React.FC<TerminalProps> = ({ tabId, connectionName, isActive, sc
         cancelAnimationFrame(resizeRafRef.current);
         resizeRafRef.current = null;
       }
+      resizeDisposable.dispose();
       inputDisposable.dispose();
       selectionDisposable.dispose();
       window.removeEventListener('resize', handleResize);

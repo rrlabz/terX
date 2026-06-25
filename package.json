@@ -72,6 +72,7 @@
       "buildResources": "build"
     },
     "win": {
+      "artifactName": "terX-v${version}-win-${arch}.${ext}",
       "target": [
         {
           "target": "nsis",
@@ -94,6 +95,7 @@
       "installerHeaderIcon": "build/app_icon.ico"
     },
     "mac": {
+      "artifactName": "terX-v${version}-macos-${arch}.${ext}",
       "target": [
         {
           "target": "dmg"
