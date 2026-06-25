@@ -17,6 +17,7 @@ import {
 import { registerSSHHandlers, shutdownActiveConnections, shutdownActiveConnectionsWithProgress } from '../utils/ssh';
 import { AppSettings, getDefaultAppSettings, loadAppSettings, saveAppSettings } from '../utils/settings';
 import { normalizeImportedConnection, projectConnectionForExport } from '../shared/connection-utils';
+import { checkForUpdates, downloadAndInstallUpdate } from '../utils/updater';
 import type { ExportFieldSelection } from '../shared/types';
 
 const isProduction = process.env.NODE_ENV === 'production' || !isDev;
@@ -484,8 +485,6 @@ function openImportExportWindow(): void {
   });
 }
 
-
-
 app.on('ready', () => {
   Menu.setApplicationMenu(null);
   initializeEncryption();
@@ -524,6 +523,27 @@ ipcMain.handle('connections:load', async () => {
   } catch (error) {
     console.error('Failed to load connections:', error);
     return [];
+  }
+});
+
+ipcMain.handle('app:check-update', async () => {
+  try {
+    return await checkForUpdates();
+  } catch (error) {
+    console.error('Check update error:', error);
+    throw error;
+  }
+});
+
+ipcMain.handle('app:download-update', async (event, url: string) => {
+  try {
+    await downloadAndInstallUpdate(url, (percent) => {
+      event.sender.send('update-progress', percent);
+    });
+    return { success: true };
+  } catch (error) {
+    console.error('Download update error:', error);
+    return { success: false, error: (error as Error).message };
   }
 });
 

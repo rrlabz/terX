@@ -33,8 +33,86 @@
     }
 
     ::-webkit-scrollbar-thumb {
-      background-color: var(--scrollbar-thumb);
-      border-radius: 999px;
+      background: #3e4451;
+      border-radius: 4px;
+    }
+
+    /* Updater Styles */
+    #updateContainer {
+      margin-top: 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .update-controls-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .update-btn-primary {
+      height: 30px;
+      border: 1px solid #335a8a;
+      border-radius: 6px;
+      background: #1f3f68;
+      color: #e8f1ff;
+      font-family: inherit;
+      font-size: 11px;
+      padding: 0 12px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      transition: background 0.15s ease, border-color 0.15s ease;
+    }
+    
+    .update-btn-primary:hover {
+      background: #28528a;
+    }
+
+    .update-btn-primary:active {
+      background: #1f3f68;
+    }
+
+    .update-btn-primary:disabled {
+      border-color: #334050;
+      background: #1a212c;
+      color: #7b8496;
+      cursor: not-allowed;
+    }
+
+    .update-btn-highlight {
+      border-color: #2b7a3b;
+      background: #205c2d;
+    }
+
+    .update-btn-highlight:hover {
+      background: #287338;
+    }
+
+    .progress-bar-wrapper {
+      width: 100%;
+      height: 4px;
+      background: #1a212c;
+      border: 1px solid #2b3442;
+      border-radius: 2px;
+      overflow: hidden;
+      display: none;
+      margin-top: 2px;
+      max-width: 300px;
+    }
+
+    .progress-bar-fill {
+      height: 100%;
+      background: #28528a;
+      width: 0%;
+      transition: width 0.3s ease, background 0.3s ease;
+    }
+
+    .update-status-text {
+      font-size: 11px;
+      color: #9fb0c5;
     }
 
     ::-webkit-scrollbar-thumb:hover {
@@ -499,32 +577,6 @@
     </section>
 
     <section class="settings-card">
-      <h2>About</h2>
-      <div class="about-grid">
-        <div class="about-row">
-          <div class="about-key">Application</div>
-          <div class="about-value">terX</div>
-        </div>
-        <div class="about-row">
-          <div class="about-key">Purpose</div>
-          <div class="about-value">terX is an open-source SSH management tool for Windows and macOS.</div>
-        </div>
-        <div class="about-row">
-          <div class="about-key">Version</div>
-          <div id="appVersionDisplay" class="about-value">Loading...</div>
-        </div>
-        <div class="about-row">
-          <div class="about-key">Terminal</div>
-          <div class="about-value">Native OpenSSH session handling</div>
-        </div>
-        <div class="about-row">
-          <div class="about-key">Developer</div>
-          <div class="about-value">Rahul R<br />https://github.com/rrlabz</div>
-        </div>
-      </div>
-
-      <hr class="about-divider" />
-
       <div class="security-section-title">
         <span class="security-icon">&#128274;</span>
         Security Details
@@ -586,6 +638,47 @@
           </p>
         </div>
       </div>
+
+      <hr class="about-divider" />
+
+      <h2>About</h2>
+      <div class="about-grid">
+        <div class="about-row">
+          <div class="about-key">Application</div>
+          <div class="about-value">terX</div>
+        </div>
+        <div class="about-row">
+          <div class="about-key">Purpose</div>
+          <div class="about-value">terX is an open-source SSH management tool for Windows and macOS.</div>
+        </div>
+        <div class="about-row">
+          <div class="about-key">Terminal</div>
+          <div class="about-value">Native OpenSSH session handling</div>
+        </div>
+        <div class="about-row">
+          <div class="about-key">Developer</div>
+          <div class="about-value">
+            Rahul R<br />https://github.com/rrlabz
+          </div>
+        </div>
+        <div class="about-row">
+          <div class="about-key">Version</div>
+          <div class="about-value">
+            <span id="appVersionDisplay">Loading...</span>
+            <div id="updateContainer">
+              <div class="update-controls-row">
+                <button id="checkUpdateBtn" type="button" class="update-btn-primary">
+                  <span style="margin-right: 6px;">&#8635;</span> Check for Updates
+                </button>
+                <span id="updateStatus" class="update-status-text"></span>
+              </div>
+              <div id="updateProgressWrapper" class="progress-bar-wrapper">
+                <div id="updateProgressFill" class="progress-bar-fill"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
     </section>
   </main>
 
@@ -610,6 +703,10 @@
       browseGlobalKeyBtn: document.getElementById('browseGlobalKeyBtn'),
       settingsStatus: document.getElementById('settingsStatus'),
       openImportExportBtn: document.getElementById('openImportExportBtn'),
+      checkUpdateBtn: document.getElementById('checkUpdateBtn'),
+      updateStatus: document.getElementById('updateStatus'),
+      updateProgressWrapper: document.getElementById('updateProgressWrapper'),
+      updateProgressFill: document.getElementById('updateProgressFill')
     };
 
     function updatePassphraseHint(hasStoredPassphrase) {
@@ -764,6 +861,55 @@
       if (event.altKey && event.code === 'Space') {
         event.preventDefault();
         void showWindowMenu();
+      }
+    });
+
+    let downloadUrl = '';
+    controls.checkUpdateBtn.addEventListener('click', async () => {
+      try {
+        if (downloadUrl) {
+          controls.checkUpdateBtn.disabled = true;
+          controls.updateStatus.textContent = 'Starting download...';
+          controls.updateProgressWrapper.style.display = 'block';
+          controls.updateProgressFill.style.width = '0%';
+          
+          // Must match the function name exposed in preload
+          window.electron.ipcRenderer.on('update-progress', (_event, percent) => {
+            controls.updateStatus.textContent = `Downloading... ${percent}%`;
+            controls.updateProgressFill.style.width = `${percent}%`;
+            if (percent === 100) {
+              controls.updateStatus.textContent = 'Download complete! Installing update...';
+              controls.checkUpdateBtn.style.display = 'none';
+              controls.updateProgressFill.style.background = '#287338';
+            }
+          });
+
+          const result = await window.electron.ipcRenderer.invoke('app:download-update', downloadUrl);
+          if (!result.success) {
+            controls.updateStatus.textContent = `Update failed: ${result.error}`;
+            controls.checkUpdateBtn.disabled = false;
+            controls.updateProgressFill.style.background = '#b9414e';
+          }
+          return;
+        }
+
+        controls.checkUpdateBtn.disabled = true;
+        controls.updateStatus.textContent = 'Checking...';
+
+        const result = await window.electron.ipcRenderer.invoke('app:check-update');
+        if (result.updateAvailable) {
+          controls.updateStatus.textContent = `Version ${result.latestVersion} is available!`;
+          controls.checkUpdateBtn.innerHTML = '<span style="margin-right: 6px;">&#8595;</span> Download & Install';
+          controls.checkUpdateBtn.classList.add('update-btn-highlight');
+          controls.checkUpdateBtn.disabled = false;
+          downloadUrl = result.downloadUrl;
+        } else {
+          controls.updateStatus.textContent = 'You are up to date.';
+          controls.checkUpdateBtn.style.display = 'none';
+        }
+      } catch (err) {
+        controls.updateStatus.textContent = `Error: ${err.message}`;
+        controls.checkUpdateBtn.disabled = false;
       }
     });
 
