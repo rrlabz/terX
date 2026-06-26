@@ -75,6 +75,15 @@ npm run build:mac
 ```
 The compiled binaries will be located in the `dist/` folder.
 
+### Troubleshooting
+
+**macOS: "App is damaged and can't be opened"**
+Since terX is open-source and distributed without a paid Apple Developer certificate, macOS Gatekeeper may flag the downloaded app as damaged. To fix this, move `terX.app` to your `Applications` folder and run the following command in your terminal to remove the quarantine attribute:
+
+```bash
+sudo xattr -dr com.apple.quarantine /Applications/terX.app
+```
+
 ## 🛡️ Security Architecture
 
 terX was built from the ground up to handle your server credentials responsibly.
