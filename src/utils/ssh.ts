@@ -177,6 +177,7 @@ export function registerSSHHandlers(getMainWindow: () => BrowserWindow | null): 
 
       // Build native OpenSSH command and force TTY for interactive shells.
       const args: string[] = [
+        '-t',
         '-o', 'ConnectTimeout=15',
         '-o', 'ServerAliveInterval=30',
         '-o', 'ServerAliveCountMax=3',

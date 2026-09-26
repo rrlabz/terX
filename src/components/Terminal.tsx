@@ -41,10 +41,25 @@ const Terminal: React.FC<TerminalProps> = ({ tabId, connectionName, isActive, sc
 
     try {
       fitAddonRef.current.fit();
+
+      // Always sync the current dimensions to the backend PTY after fitting.
+      // xterm's onResize callback only fires when cols/rows actually *change*,
+      // but the backend PTY can be out-of-sync after tab switches, initial spawn
+      // (which uses hardcoded 120x30), or if a previous resize IPC was dropped.
+      // Sending unconditionally ensures the remote shell's COLUMNS/LINES always
+      // match the visible terminal, fixing line-wrap/backspace overlap and Vim sizing.
+      const term = terminalRef.current;
+      if (term) {
+        window.electron?.ipcRenderer.invoke('terminal:resize', {
+          tabId,
+          cols: term.cols,
+          rows: term.rows,
+        });
+      }
     } catch (error) {
       console.error('Failed to fit terminal:', error);
     }
-  }, []);
+  }, [tabId]);
 
   const scheduleFitAndResize = useCallback(() => {
     if (resizeRafRef.current !== null) {
@@ -107,17 +122,18 @@ const Terminal: React.FC<TerminalProps> = ({ tabId, connectionName, isActive, sc
 
     // Delay initial fit so layout is ready.
     const initialFitTimer = window.setTimeout(() => {
-      scheduleFitAndResize();
+      scheduleFitAndResize(); // fit() now also syncs dimensions to the backend
       if (isActiveRef.current) {
         term.focus();
       }
-      // Guarantee the backend is synced with our calculated starting dimensions
-      window.electron?.ipcRenderer.invoke('terminal:resize', {
-        tabId,
-        cols: term.cols,
-        rows: term.rows,
-      });
     }, 100);
+
+    // Safety net: re-fit after a longer delay to handle slow layout cases.
+    // The first fit at 100ms can sometimes run before the container has its
+    // final dimensions (e.g., CSS transitions, lazy rendering).
+    const safetyFitTimer = window.setTimeout(() => {
+      scheduleFitAndResize();
+    }, 300);
 
     // Handle terminal input
     const inputDisposable = term.onData((input: string) => {
@@ -181,6 +197,7 @@ const Terminal: React.FC<TerminalProps> = ({ tabId, connectionName, isActive, sc
 
     return () => {
       window.clearTimeout(initialFitTimer);
+      window.clearTimeout(safetyFitTimer);
       if (resizeRafRef.current !== null) {
         cancelAnimationFrame(resizeRafRef.current);
         resizeRafRef.current = null;
@@ -216,8 +233,19 @@ const Terminal: React.FC<TerminalProps> = ({ tabId, connectionName, isActive, sc
       return;
     }
 
+    // Fit immediately for responsiveness.
     scheduleFitAndResize();
     focusTerminal();
+
+    // Safety net: re-fit after a delay. When a tab transitions from
+    // display:none → display:block, the first requestAnimationFrame can fire
+    // before the browser has fully settled the layout. This second fit
+    // guarantees the remote shell's COLUMNS/LINES match the visible terminal.
+    const activationSafetyFit = window.setTimeout(() => {
+      scheduleFitAndResize();
+    }, 100);
+
+    return () => window.clearTimeout(activationSafetyFit);
   }, [focusTerminal, isActive, scheduleFitAndResize]);
 
   return (
