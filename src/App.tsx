@@ -5,23 +5,6 @@ import TerminalTabs from './components/TerminalTabs';
 import { sanitizeTerminalPreview } from './shared/terminal-utils';
 import type { ConnectionProfile, ShutdownStatePayload } from './shared/types';
 
-interface ElectronAPI {
-  platform?: string;
-  ipcRenderer: {
-    invoke: (channel: string, ...args: any[]) => Promise<any>;
-    send: (channel: string, ...args: any[]) => void;
-    on: (channel: string, listener: (event: any, ...args: any[]) => void) => (() => void);
-    off: (channel: string, listener: (event: any, ...args: any[]) => void) => void;
-    once: (channel: string, listener: (event: any, ...args: any[]) => void) => void;
-    removeAllListeners: (channel: string) => void;
-  };
-}
-
-declare global {
-  interface Window {
-    electron?: ElectronAPI;
-  }
-}
 
 interface AppToast {
   id: number;
